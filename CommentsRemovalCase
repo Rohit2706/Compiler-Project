@@ -9,6 +9,9 @@ w:=5;
 declare m:real;
 [r,m] := use mod1 with parameters v, w;
 print(r);
+** bro
+bro
+bruh**
 print(m);
 end
 **Bruh bruh bruh**
@@ -21,4 +24,4 @@ c:=10.4;
 x:=a+b-10;
 abc:=b/5+c;
 end
-*duniya khatam*
+**duniya khatam**
