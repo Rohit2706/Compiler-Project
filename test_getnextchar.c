@@ -1,10 +1,8 @@
 #include<stdlib.h>
 #include<stdio.h>
 #define buffer_size 5
-#include<stdlib.h>
-#include<stdio.h>
 #include<string.h>
-typedef enum{PLUS, MINUS, MUL, DIV, LT, LE, GE, GT, EQ, NE, DEF, ENDDEF, DRIVERDEF, DRIVERENDDEF, COLON, RANGEOP, SEMICOL, COMMA, ASSIGNOP, SQBO, SQBC, BO, BC, ID, NUM, RNUM, ERROR, SUCCESS} TOKEN;
+#include "lexer.h"
 
 const char* convert(TOKEN sym){
     switch(sym)
@@ -40,38 +38,26 @@ const char* convert(TOKEN sym){
     }
 }
 
-typedef union{
-  uint num_value;
-  float rnum_value;
-}VALUE;
-
-typedef struct{
-  TOKEN token;
-  char lexeme[25];
-  uint length;
-  uint line_no;
-  VALUE value;
-  int tag;
-}TokenInfo;
-TokenInfo getNextToken(char* buffer1, char* buffer2, int *state);
-TokenInfo dfa(char* buffer1, char* buffer2, int *state, TokenInfo newToken);
-TokenInfo tokenGen(TokenInfo newToken, TOKEN token_name);
 FILE* file;
 char* forward;
 int status = 1;
 int line_count = 1;
 int *flag;
+
+
 void getStream(char* buffer){
 	int size = fread(buffer, sizeof(char), buffer_size, file);
 	if(size!=buffer_size)
 		buffer[size] = '\0';
 	forward = buffer;
 }
+
 TokenInfo failure(TokenInfo newToken, char ch){
   if(ch=='\0')
     return tokenGen(newToken, SUCCESS);
   return tokenGen(newToken, ERROR);
 }
+
 char getNextChar(char* buffer1, char* buffer2, char* lexeme, int* length){
     
   if(*forward !=EOF){
@@ -139,8 +125,7 @@ int main(){
  	}*/
 
   TokenInfo mytoken;
-  int current_state = 0;
-  while((mytoken = getNextToken(buffer1, buffer2, &current_state)).token!= SUCCESS){ //&& mytoken.line_no<24){
+  while((mytoken = getNextToken(buffer1, buffer2)).token!= SUCCESS){ //&& mytoken.line_no<24){
     printf("Token:%s\t\tLexeme:%-15sLine:%d\t",convert(mytoken.token),mytoken.lexeme,mytoken.line_no);
     if(mytoken.tag==1)
       printf("Value: %d\n",mytoken.value.num_value);
@@ -202,18 +187,16 @@ TokenInfo tokenGen(TokenInfo newToken, TOKEN token_name){
     return newToken;
 }
 
-TokenInfo getNextToken(char* buffer1, char* buffer2, int *state){
+TokenInfo getNextToken(char* buffer1, char* buffer2){
   TokenInfo newToken;
   newToken.length = 0;
   newToken.tag=0;
   int start = 0;
-  return dfa(buffer1, buffer2, &start, newToken);
-}
-
-TokenInfo dfa(char* buffer1, char* buffer2, int *state, TokenInfo newToken){
   char c;
+  int* state = &start;
 
-  switch(*state){
+  while(1){
+    switch(*state){
     case 0:
         c=getNextChar(buffer1, buffer2, newToken.lexeme, &(newToken.length));
 
@@ -549,5 +532,5 @@ TokenInfo dfa(char* buffer1, char* buffer2, int *state, TokenInfo newToken){
 
       break;
   }
-  return dfa(buffer1, buffer2, state, newToken);
+}
 }
