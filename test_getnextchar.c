@@ -1,11 +1,10 @@
 #include<stdlib.h>
 #include<stdio.h>
-#define buffer_size 512
-//#include<lexer.h>
+#define buffer_size 5
 #include<stdlib.h>
 #include<stdio.h>
-
-typedef enum{PLUS, MINUS, MUL, DIV, LT, LE, GE, GT, EQ, NE, DEF, ENDDEF, COLON, RANGEOP, SEMICOL, COMMA, ASSIGNOP, SQBO, SQBC, BO, BC, ID, NUM, RNUM, ERROR, SUCCESS} TOKEN;
+#include<string.h>
+typedef enum{PLUS, MINUS, MUL, DIV, LT, LE, GE, GT, EQ, NE, DEF, ENDDEF, DRIVERDEF, DRIVERENDDEF, COLON, RANGEOP, SEMICOL, COMMA, ASSIGNOP, SQBO, SQBC, BO, BC, ID, NUM, RNUM, ERROR, SUCCESS} TOKEN;
 
 const char* convert(TOKEN sym){
     switch(sym)
@@ -22,6 +21,8 @@ const char* convert(TOKEN sym){
         case NE: return "NE" ; break;
         case DEF: return "DEF" ; break;
         case ENDDEF: return "ENDDEF" ; break;
+        case DRIVERDEF: return "DRIVERDEF" ; break;
+        case DRIVERENDDEF: return "DRIVERENDDEF" ; break;
         case COLON: return "COLON" ; break;
         case RANGEOP: return "RANGEOP" ; break;
         case SEMICOL: return "SEMICOL" ; break;
@@ -52,9 +53,9 @@ typedef struct{
   VALUE value;
   int tag;
 }TokenInfo;
-TokenInfo* getNextToken(char* buffer1, char* buffer2, int *state);
-TokenInfo* dfa(char* buffer1, char* buffer2, int *state, TokenInfo* newToken);
-TokenInfo* tokenGen(TokenInfo* newToken, TOKEN token_name);
+TokenInfo getNextToken(char* buffer1, char* buffer2, int *state);
+TokenInfo dfa(char* buffer1, char* buffer2, int *state, TokenInfo newToken);
+TokenInfo tokenGen(TokenInfo newToken, TOKEN token_name);
 FILE* file;
 char* forward;
 int status = 1;
@@ -66,7 +67,7 @@ void getStream(char* buffer){
 		buffer[size] = '\0';
 	forward = buffer;
 }
-TokenInfo* failure(TokenInfo* newToken, char ch){
+TokenInfo failure(TokenInfo newToken, char ch){
   if(ch=='\0')
     return tokenGen(newToken, SUCCESS);
   return tokenGen(newToken, ERROR);
@@ -88,11 +89,15 @@ char getNextChar(char* buffer1, char* buffer2, char* lexeme, int* length){
       if(forward==buffer1+buffer_size){
           forward=buffer2;
           forward++;
+          lexeme[*length]=*(forward-1);
+          (*length)++;
           return *(forward-1);
       }
       else if(forward==buffer2+buffer_size){
           forward=buffer1;
           forward++;
+          lexeme[*length]=*(forward-1);
+          (*length)++;
           return *(forward-1);
       }
   }
@@ -114,7 +119,7 @@ char getNextChar(char* buffer1, char* buffer2, char* lexeme, int* length){
 
 int main(){
 
- 	file = fopen("test_for_comments","r");
+ 	file = fopen("t1.txt","r");
   int x = 0;
  	char ch;
  	flag=&x;
@@ -133,10 +138,16 @@ int main(){
  		printf("%c",ch);
  	}*/
 
-  TokenInfo* mytoken;
+  TokenInfo mytoken;
   int current_state = 0;
-  while((mytoken = getNextToken(buffer1, buffer2, &current_state))->token!= SUCCESS){ //&& mytoken->line_no<24){
-    printf("Token:%s\t\tLexeme:%-15sLine:%d\n",convert(mytoken->token),mytoken->lexeme,mytoken->line_no);
+  while((mytoken = getNextToken(buffer1, buffer2, &current_state)).token!= SUCCESS){ //&& mytoken.line_no<24){
+    printf("Token:%s\t\tLexeme:%-15sLine:%d\t",convert(mytoken.token),mytoken.lexeme,mytoken.line_no);
+    if(mytoken.tag==1)
+      printf("Value: %d\n",mytoken.value.num_value);
+    else if(mytoken.tag==2)
+       printf("Value: %f\n",mytoken.value.rnum_value);
+     else
+       printf("Value: None\n");//,mytoken.value.num_value);
   }
 
   //printf("%d",  line_count);
@@ -152,7 +163,7 @@ int main(){
 
 void retract(char* buffer1, char* buffer2, char* lexeme, int* length){
     
-    if(forward==buffer2){
+   if(forward==buffer2){
         *flag=1;
         forward= buffer1+ buffer_size-1;
         *length=*length-1;
@@ -170,47 +181,41 @@ void retract(char* buffer1, char* buffer2, char* lexeme, int* length){
     }
     
 }
-int StringtoInteger(char* a){
-  return 0;
-}
-float StringtoFloat(char* a){
-  return 0;
-}
 
 TOKEN search_keyword(char* lexeme){
   return ID;
 }
-TokenInfo* tokenGen(TokenInfo* newToken, TOKEN token_name){
-    newToken->lexeme[newToken->length] = '\0';
-    newToken->token = token_name;
-    newToken->line_no = line_count;
+TokenInfo tokenGen(TokenInfo newToken, TOKEN token_name){
+    newToken.lexeme[newToken.length] = '\0';
+    newToken.token = token_name;
+    newToken.line_no = line_count;
 
     if(token_name == NUM){
-      (newToken->value).num_value = StringtoInteger(newToken->lexeme);
-      newToken->tag = 1;
+      (newToken.value).num_value = atoi(newToken.lexeme);
+      newToken.tag = 1;
     }
     else if(token_name == RNUM){
-      (newToken->value).rnum_value = StringtoFloat(newToken->lexeme);
-      newToken->tag = 2;
+      (newToken.value).rnum_value = atof(newToken.lexeme);
+      newToken.tag = 2;
     }
 
     return newToken;
 }
 
-TokenInfo* getNextToken(char* buffer1, char* buffer2, int *state){
-  TokenInfo* newToken = (TokenInfo*) malloc(sizeof(TokenInfo));
-  newToken->length = 0;
-  newToken->tag=0;
+TokenInfo getNextToken(char* buffer1, char* buffer2, int *state){
+  TokenInfo newToken;
+  newToken.length = 0;
+  newToken.tag=0;
   int start = 0;
   return dfa(buffer1, buffer2, &start, newToken);
 }
 
-TokenInfo* dfa(char* buffer1, char* buffer2, int *state, TokenInfo* newToken){
+TokenInfo dfa(char* buffer1, char* buffer2, int *state, TokenInfo newToken){
   char c;
 
   switch(*state){
     case 0:
-        c=getNextChar(buffer1, buffer2, newToken->lexeme, &(newToken->length));
+        c=getNextChar(buffer1, buffer2, newToken.lexeme, &(newToken.length));
 
         if((c>='a' && c<='z') || (c>='A' && c<='Z')) *state=1;
         else if(c==';') *state=3;
@@ -230,28 +235,29 @@ TokenInfo* dfa(char* buffer1, char* buffer2, int *state, TokenInfo* newToken){
         else if(c==':') *state=37;
         else if(c=='+') *state=40;
         else if(c=='-') *state=41;
-        else if(c==' ' || c=='\r'){ 
+        else if(c==' ' || c=='\r' || c=='\t'){ 
           *state=0;
-          newToken->length--;
+          newToken.length--;
         }
         else if(c=='\n'){ 
           *state=42;
-          newToken->length--;
+          newToken.length--;
         }
-        else return failure(newToken, c);
-
+        else{
+          return failure(newToken, c);
+        }
         break;
     
     case 1:
-        c=getNextChar(buffer1, buffer2, newToken->lexeme, &(newToken->length));
+        c=getNextChar(buffer1, buffer2, newToken.lexeme, &(newToken.length));
         if((c>='a' && c<='z') || (c>='A' && c<='Z') || (c>='0' && c<='9') || c=='_') *state=1;
         else    *state=2;
 
         break;
     
     case 2:
-        retract(buffer1, buffer2, newToken->lexeme, &(newToken->length));
-        return tokenGen(newToken, search_keyword(newToken->lexeme));
+        retract(buffer1, buffer2, newToken.lexeme, &(newToken.length));
+        return tokenGen(newToken, search_keyword(newToken.lexeme));
 
         break;
     
@@ -261,25 +267,28 @@ TokenInfo* dfa(char* buffer1, char* buffer2, int *state, TokenInfo* newToken){
         break;
     
     case 4:
-        c=getNextChar(buffer1, buffer2, newToken->lexeme, &(newToken->length));
+        c=getNextChar(buffer1, buffer2, newToken.lexeme, &(newToken.length));
         if((c>='0' && c<='9'))    *state=4;
         else if(c=='.') *state=5;
         else *state=11;
         break;
     
     case 5:
-        c=getNextChar(buffer1, buffer2, newToken->lexeme, &(newToken->length));
+        c=getNextChar(buffer1, buffer2, newToken.lexeme, &(newToken.length));
         if((c>='0' && c<='9'))    *state=6;
         else if(c=='.'){
-            retract(buffer1, buffer2, newToken->lexeme, &(newToken->length));
+            retract(buffer1, buffer2, newToken.lexeme, &(newToken.length));
+            retract(buffer1, buffer2, newToken.lexeme, &(newToken.length));
             return tokenGen(newToken, NUM);
         }
-        else return failure(newToken, c);
-
+        else{
+          retract(buffer1, buffer2, newToken.lexeme, &(newToken.length));
+          return failure(newToken, c);
+        }
         break;
         
     case 6:
-        c=getNextChar(buffer1, buffer2, newToken->lexeme, &(newToken->length));
+        c=getNextChar(buffer1, buffer2, newToken.lexeme, &(newToken.length));
         if((c>='0' && c<='9'))    *state=6;
         else if(c=='E' || c=='e')   *state=7;
         else *state=10;
@@ -287,44 +296,50 @@ TokenInfo* dfa(char* buffer1, char* buffer2, int *state, TokenInfo* newToken){
         break;
     
     case 7:
-        c=getNextChar(buffer1, buffer2, newToken->lexeme, &(newToken->length));
+        c=getNextChar(buffer1, buffer2, newToken.lexeme, &(newToken.length));
         if((c>='0' && c<='9'))    *state=9;
         else if(c=='+' || c=='-')   *state=8;
-        else return failure(newToken, c);
-
+        else{
+          retract(buffer1, buffer2, newToken.lexeme, &(newToken.length));
+          return failure(newToken, c);
+        }
         break;
         
     case 8:
-        c=getNextChar(buffer1, buffer2, newToken->lexeme, &(newToken->length));
+        c=getNextChar(buffer1, buffer2, newToken.lexeme, &(newToken.length));
         if((c>='0' && c<='9'))    *state=9;
-        else return failure(newToken, c);
-
+        else{
+          retract(buffer1, buffer2, newToken.lexeme, &(newToken.length));
+          return failure(newToken, c);
+        }
         break;
     
     case 9:
-        c=getNextChar(buffer1, buffer2, newToken->lexeme, &(newToken->length));
+        c=getNextChar(buffer1, buffer2, newToken.lexeme, &(newToken.length));
         if((c>='0' && c<='9'))    *state=9;
         else *state=10;
 
         break;
     
     case 10:
-        retract(buffer1, buffer2, newToken->lexeme, &(newToken->length));
+        retract(buffer1, buffer2, newToken.lexeme, &(newToken.length));
         return tokenGen(newToken, RNUM);
 
         break;
     
     case 11:
-        retract(buffer1, buffer2, newToken->lexeme, &(newToken->length));
+        retract(buffer1, buffer2, newToken.lexeme, &(newToken.length));
         return tokenGen(newToken, NUM);  
 
         break;
         
     case 12:
-        c=getNextChar(buffer1, buffer2, newToken->lexeme, &(newToken->length));
+        c=getNextChar(buffer1, buffer2, newToken.lexeme, &(newToken.length));
         if(c=='.')  *state=13;
-        else return failure(newToken, c);
-
+        else{
+          retract(buffer1, buffer2, newToken.lexeme, &(newToken.length));
+          return failure(newToken, c);
+        }
         break;
 
     case 13:
@@ -333,17 +348,17 @@ TokenInfo* dfa(char* buffer1, char* buffer2, int *state, TokenInfo* newToken){
         break;
     
     case 14:
-        c=getNextChar(buffer1, buffer2, newToken->lexeme, &(newToken->length));
+        c=getNextChar(buffer1, buffer2, newToken.lexeme, &(newToken.length));
         if(c=='*'){
           *state=15;
-          newToken->length -= 2;
+          newToken.length -= 2;
         }
         else *state=18;
 
         break;
         
     case 15:
-          c=getNextChar(buffer1, buffer2, newToken->lexeme, &(newToken->length));
+          c=getNextChar(buffer1, buffer2, newToken.lexeme, &(newToken.length));
          if(c=='*')    *state=16;
          else if(c=='\n'){
             line_count++;
@@ -353,22 +368,21 @@ TokenInfo* dfa(char* buffer1, char* buffer2, int *state, TokenInfo* newToken){
             *state=15;
             
          }
-         newToken->length--;
+         newToken.length--;
          break;
     
     case 16:
-         c=getNextChar(buffer1, buffer2, newToken->lexeme, &(newToken->length));
+         c=getNextChar(buffer1, buffer2, newToken.lexeme, &(newToken.length));
          if(c=='*'){
             *state=17;
-            newToken->length -= 2;
          }
          else if(c=='\n'){
              line_count++;
              *state=43;
-             newToken->length--;
+             
          }
          else *state=15;
-
+          newToken.length--;
          break;
     
     case 17:
@@ -376,7 +390,7 @@ TokenInfo* dfa(char* buffer1, char* buffer2, int *state, TokenInfo* newToken){
          break; 
 
     case 18:
-        retract(buffer1, buffer2, newToken->lexeme, &(newToken->length));
+        retract(buffer1, buffer2, newToken.lexeme, &(newToken.length));
         return tokenGen(newToken, MUL);
 
         break;
@@ -398,10 +412,12 @@ TokenInfo* dfa(char* buffer1, char* buffer2, int *state, TokenInfo* newToken){
         break; 
     
     case 23:
-        c=getNextChar(buffer1, buffer2, newToken->lexeme, &(newToken->length));
+        c=getNextChar(buffer1, buffer2, newToken.lexeme, &(newToken.length));
         if(c=='=')  *state=24;
-        else return failure(newToken, c);
-
+        else{
+          retract(buffer1, buffer2, newToken.lexeme, &(newToken.length));
+          return failure(newToken, c);
+        }
         break;
     
     case 24:
@@ -409,10 +425,12 @@ TokenInfo* dfa(char* buffer1, char* buffer2, int *state, TokenInfo* newToken){
         break;
     
     case 25:
-        c=getNextChar(buffer1, buffer2, newToken->lexeme, &(newToken->length));
+        c=getNextChar(buffer1, buffer2, newToken.lexeme, &(newToken.length));
         if(c=='=')  *state=26;
-        else return failure(newToken, c);
-
+        else{
+          retract(buffer1, buffer2, newToken.lexeme, &(newToken.length));
+          return failure(newToken, c);
+        }
         break;
     
     case 26:
@@ -428,14 +446,16 @@ TokenInfo* dfa(char* buffer1, char* buffer2, int *state, TokenInfo* newToken){
         break; 
         
     case 29:
-        c=getNextChar(buffer1, buffer2, newToken->lexeme, &(newToken->length));
+        c=getNextChar(buffer1, buffer2, newToken.lexeme, &(newToken.length));
         if(c=='<')  *state=30;
         else if(c=='=') *state=31;
         else    *state=32;
         break;
     
     case 30:
-        return tokenGen(newToken, DEF);
+        c=getNextChar(buffer1, buffer2, newToken.lexeme, &(newToken.length));
+        if(c=='<')  *state = 44;
+        else  *state = 45;
         break; 
     
     case 31:
@@ -443,19 +463,21 @@ TokenInfo* dfa(char* buffer1, char* buffer2, int *state, TokenInfo* newToken){
         break; 
         
     case 32:
-        retract(buffer1, buffer2, newToken->lexeme, &(newToken->length));
+        retract(buffer1, buffer2, newToken.lexeme, &(newToken.length));
         return tokenGen(newToken, LT);
         break; 
     
     case 33:
-        c=getNextChar(buffer1, buffer2, newToken->lexeme, &(newToken->length));
+        c=getNextChar(buffer1, buffer2, newToken.lexeme, &(newToken.length));
         if(c=='>')  *state=34;
         else if(c=='=') *state=35;
         else    *state=36;
         break; 
     
     case 34:
-        return tokenGen(newToken, ENDDEF);
+        c=getNextChar(buffer1, buffer2, newToken.lexeme, &(newToken.length));
+        if(c=='>')  *state=46;
+        else *state=47;
         break; 
     
     case 35:
@@ -463,12 +485,12 @@ TokenInfo* dfa(char* buffer1, char* buffer2, int *state, TokenInfo* newToken){
         break; 
         
     case 36:
-        retract(buffer1, buffer2, newToken->lexeme, &(newToken->length));
+        retract(buffer1, buffer2, newToken.lexeme, &(newToken.length));
         return tokenGen(newToken, GT);
         break; 
         
     case 37:
-        c=getNextChar(buffer1, buffer2, newToken->lexeme, &(newToken->length));
+        c=getNextChar(buffer1, buffer2, newToken.lexeme, &(newToken.length));
         if(c=='=')  *state=38;
         else    *state=39;
         break; 
@@ -478,7 +500,7 @@ TokenInfo* dfa(char* buffer1, char* buffer2, int *state, TokenInfo* newToken){
         break; 
         
     case 39:
-        retract(buffer1, buffer2, newToken->lexeme, &(newToken->length));
+        retract(buffer1, buffer2, newToken.lexeme, &(newToken.length));
         return tokenGen(newToken, COLON);
         break; 
     
@@ -497,15 +519,35 @@ TokenInfo* dfa(char* buffer1, char* buffer2, int *state, TokenInfo* newToken){
         break;
 
     case 43:
-        c=getNextChar(buffer1, buffer2, newToken->lexeme, &(newToken->length));
+        c=getNextChar(buffer1, buffer2, newToken.lexeme, &(newToken.length));
         if(c=='\n'){
           line_count++;
           *state=43;
         }
         else if(c=='*') *state = 16;
         else *state=15;
-        newToken->length--;
+        newToken.length--;
         break;
+
+    case 44:
+      return tokenGen(newToken, DRIVERDEF);
+      break; 
+
+    case 45:
+      retract(buffer1, buffer2, newToken.lexeme, &(newToken.length));
+      return tokenGen(newToken, DEF);
+
+      break;
+
+    case 46:
+      return tokenGen(newToken, DRIVERENDDEF);
+      break;
+
+    case 47:
+      retract(buffer1, buffer2, newToken.lexeme, &(newToken.length));
+      return tokenGen(newToken, ENDDEF);
+
+      break;
   }
   return dfa(buffer1, buffer2, state, newToken);
 }
