@@ -190,7 +190,7 @@ void add_keywords(hashtable *ht){
 
 }
 
-NON_TERMINAL enumToString(char* inpString,hashtable* ht){
+NON_TERMINAL stringToEnum(char* inpString,hashtable* ht){
 	//use hash table from hashNonTerminal.c
 	return get_value(ht,inpString);
 }
@@ -199,6 +199,6 @@ int main(){
 
 	hashtable* ht=hashtable_create(57);
 	add_keywords(ht);
-	NON_TERMINAL nt=enumToString("range",ht);
+	NON_TERMINAL nt=stringToEnum("range",ht);
 	printf("result is %d\n", nt);
 }
