@@ -1,0 +1,144 @@
+
+#include<stdio.h>
+
+
+Rule[NT_SIZE] map; //56 size
+
+int calculateFirst(NON_TERMINAL nt){
+  if(first[nt])
+    return first[nt];
+  // Assuming epsilon is at 0
+	Rule_node* curr = map[nt]->head;
+	while(curr!=NULL){
+    node* symbol_node = Grammar[curr->rule]->head->next ; //Symbol is union of NT and T
+    int val = 0;
+    while(symbol_node!=NULL) //Add isTerminal
+    {
+			if(isTerminal(s)){
+      	first[nt] = first[nt] | locate(symbol_node->symbol);
+        break;
+      }
+    	else{
+        val = calculateFirst(symbol_node->symbol);
+      	first[nt] = first[nt] | ((val&1)?(val-1):val);
+      }
+      if(first[symbol_node->symbol]&1){
+      	symbol_node = symbol_node->next;
+      }
+      else
+        break;
+    }
+    
+    if(symbol_node==NULL)
+      first[nt] = first[nt] | 1;
+    
+    curr = curr->next;
+	}
+  
+  return first[nt];
+}
+
+typedef struct{
+	int rule;
+	Rule_node* next;
+}Rule_node;
+
+typedef struct{
+	Rule_node* head = NULL;
+	Rule_node* tail = NULL;
+}Rule;
+
+int main(){
+	for(int i=0;i<GRAMMAR_SIZE;i++){
+		NON_TERMINAL index = arr[i]->head->data;
+		if(map[index]->head==NULL){
+			map[index]->head = malloc(sizeof(Rule_node));
+			map[index]->head->rule = i;
+			map[index]->head->next = NULL;
+			map[index]->tail = map[index]->head;
+		}
+		else{
+			map[index]->tail->next = malloc(sizeof(Rule_node));
+			map[index]->tail = map[index]->tail->next;
+			map[index]->tail->rule = i;
+			map[index]->tail->next = NULL;
+		}
+	}
+
+	return 0;
+}
+
+
+
+
+
+
+
+
+
+
+
+enum {PROGRAM,MODULEDECLARATIONS,MODULEDECLARATION,OTHERMODULES,DRIVERMODULE,MODULE,RET,INPUT_PLIST,INPUT_PLIST_1,OUTPUT_PLIST,OUTPUT_PLIST_1,DATATYPE,TYPE,MODULEDEF,STATEMENTS,STATEMENT,IOSTMT,VAR,VAR_ID_NUM,BOOLCONSTT,WHICHID,SIMPLESTMT,ASSIGNMENTSTMT,WHICHSTMT,LVALUEIDSTMT,LVALUEARRSTMT,INDEX,MODULEREUSESTMT,OPTIONAL,IDLIST,IDLIST_1,EXPRESSION,U,U_1,ARMORBOOL,N7,ANYTERM,N8,ARITHMETICEXPR,ARITHMETICEXPR_1,TERM,TERM_1,FACTOR,OP1,OP2,LOGICALOP,RELATIONALOP,DECLARESTMT,CONDITIONALSTMT,CASESTMT,CASESTMT_1,VALUE,DEFAULT,ITERATIVESTMT,RANGE_ARRAYS,RANGE}NON_TERMINAL;
+
+
+
+enum {program,moduleDeclarations,moduleDeclaration,otherModules,driverModule,module,ret,input_plist,input_plist_1,output_plist,output_plist_1,dataType,type,moduleDef,statements,statement,ioStmt,var,var_id_num,boolConstt,whichId,simpleStmt,assignmentStmt,whichStmt,lvalueIDStmt,lvalueARRStmt,index,moduleReuseStmt,optional,idList,idList_1,expression,U,U_1,armOrbool,N7,AnyTerm,N8,arithmeticExpr,arithmeticExpr_1,term,term_1,factor,op1,op2,logicalOp,relationalOp,declareStmt,conditionalStmt,caseStmt,caseStmt_1,value,default,iterativeStmt,range_arrays,range}
+
+
+
+NON_TERMINAL stringToEnum(char* inpString){
+
+	if(strcmp(inpString,'def'))	return ABC
+	else if(strcmp(inpString,'def'))	return ABC
+	else if(strcmp(inpString,'def'))	return ABC
+	else if(strcmp(inpString,'def'))	return ABC
+	else if(strcmp(inpString,'def'))	return ABC
+	else if(strcmp(inpString,'def'))	return ABC
+	else if(strcmp(inpString,'def'))	return ABC
+	else if(strcmp(inpString,'def'))	return ABC
+	else if(strcmp(inpString,'def'))	return ABC
+	else if(strcmp(inpString,'def'))	return ABC
+	else if(strcmp(inpString,'def'))	return ABC
+	else if(strcmp(inpString,'def'))	return ABC
+	else if(strcmp(inpString,'def'))	return ABC
+	else if(strcmp(inpString,'def'))	return ABC
+	else if(strcmp(inpString,'def'))	return ABC
+	else if(strcmp(inpString,'def'))	return ABC
+	else if(strcmp(inpString,'def'))	return ABC
+	else if(strcmp(inpString,'def'))	return ABC
+	else if(strcmp(inpString,'def'))	return ABC
+	else if(strcmp(inpString,'def'))	return ABC
+	else if(strcmp(inpString,'def'))	return ABC
+	else if(strcmp(inpString,'def'))	return ABC
+	else if(strcmp(inpString,'def'))	return ABC
+	else if(strcmp(inpString,'def'))	return ABC
+	else if(strcmp(inpString,'def'))	return ABC
+	else if(strcmp(inpString,'def'))	return ABC
+	else if(strcmp(inpString,'def'))	return ABC
+	else if(strcmp(inpString,'def'))	return ABC
+	else if(strcmp(inpString,'def'))	return ABC
+	else if(strcmp(inpString,'def'))	return ABC
+	else if(strcmp(inpString,'def'))	return ABC
+	else if(strcmp(inpString,'def'))	return ABC
+	else if(strcmp(inpString,'def'))	return ABC
+	else if(strcmp(inpString,'def'))	return ABC
+	else if(strcmp(inpString,'def'))	return ABC
+	else if(strcmp(inpString,'def'))	return ABC
+	else if(strcmp(inpString,'def'))	return ABC
+	else if(strcmp(inpString,'def'))	return ABC
+	else if(strcmp(inpString,'def'))	return ABC
+	else if(strcmp(inpString,'def'))	return ABC
+	else if(strcmp(inpString,'def'))	return ABC
+	else if(strcmp(inpString,'def'))	return ABC
+	else if(strcmp(inpString,'def'))	return ABC
+	else if(strcmp(inpString,'def'))	return ABC
+	else if(strcmp(inpString,'def'))	return ABC
+	else if(strcmp(inpString,'def'))	return ABC
+	else if(strcmp(inpString,'def'))	return ABC
+	else if(strcmp(inpString,'def'))	return ABC
+	else if(strcmp(inpString,'def'))	return ABC
+	if(strcmp(inpString,'def'))	return ABC
+
+
+}
+
