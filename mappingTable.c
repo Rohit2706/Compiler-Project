@@ -2,8 +2,6 @@
 
 #include "mappingTable.h"
 
-int gtag = 0;
-
 // Function Definations
 
 // 1. To create hash table
@@ -119,7 +117,7 @@ void insert_entry_nonterminal(hashtable *ht, char* key, NON_TERMINAL val){
 }
 
 // 5. To get the value given a key
-Symbol get_value(hashtable *ht,char* key){
+tagged_union get_value(hashtable *ht,char* key){
 
     Datapair* pair = NULL;
     int hashvalue =hash_func(ht,key);
@@ -128,10 +126,10 @@ Symbol get_value(hashtable *ht,char* key){
     while(pair!=NULL && pair->key !=NULL && strcmp(key,pair->key) > 0){
         pair = pair->next;
     }
-
-    gtag = pair->tag;
-    return pair->value;
-    
+    tagged_union T;
+    T.tag = pair->tag;
+    T.value = pair->value;
+    return T;
 }
 
 // 6. To add terminals and non-terminals
@@ -164,36 +162,36 @@ void add_terminals(hashtable *ht){
     insert_entry_terminal(ht,"RNUM",RNUM);
     insert_entry_terminal(ht,"EPSILON",EPSILON);
     insert_entry_terminal(ht,"DOLLAR",DOLLAR);
-    insert_entry_terminal(ht,"integer",INTEGER);
-    insert_entry_terminal(ht,"real",REAL);
-    insert_entry_terminal(ht,"boolean",BOOLEAN);
-    insert_entry_terminal(ht,"of",OF);
-    insert_entry_terminal(ht,"array",ARRAY);
-    insert_entry_terminal(ht,"start",START);
-    insert_entry_terminal(ht,"end",END);
-    insert_entry_terminal(ht,"declare",DECLARE);
-    insert_entry_terminal(ht,"module",MODULE);
-    insert_entry_terminal(ht,"driver",DRIVER);
-    insert_entry_terminal(ht,"program",PROGRAM);
-    insert_entry_terminal(ht,"get_value",GET_VALUE);
-    insert_entry_terminal(ht,"print",PRINT);
-    insert_entry_terminal(ht,"use",USE);
-    insert_entry_terminal(ht,"with",WITH);
-    insert_entry_terminal(ht,"parameters",PARAMETERS);
-    insert_entry_terminal(ht,"true",TRUE);
-    insert_entry_terminal(ht,"false",FALSE);
-    insert_entry_terminal(ht,"takes",TAKES);
-    insert_entry_terminal(ht,"input",INPUT);
-    insert_entry_terminal(ht,"returns",RETURNS);
+    insert_entry_terminal(ht,"INTEGER",INTEGER);
+    insert_entry_terminal(ht,"REAL",REAL);
+    insert_entry_terminal(ht,"BOOLEAN",BOOLEAN);
+    insert_entry_terminal(ht,"OF",OF);
+    insert_entry_terminal(ht,"ARRAY",ARRAY);
+    insert_entry_terminal(ht,"START",START);
+    insert_entry_terminal(ht,"END",END);
+    insert_entry_terminal(ht,"DECLARE",DECLARE);
+    insert_entry_terminal(ht,"MODULE",MODULE);
+    insert_entry_terminal(ht,"DRIVER",DRIVER);
+    insert_entry_terminal(ht,"PROGRAM",PROGRAM);
+    insert_entry_terminal(ht,"GET_VALUE",GET_VALUE);
+    insert_entry_terminal(ht,"PRINT",PRINT);
+    insert_entry_terminal(ht,"USE",USE);
+    insert_entry_terminal(ht,"WITH",WITH);
+    insert_entry_terminal(ht,"PARAMETERS",PARAMETERS);
+    insert_entry_terminal(ht,"TRUE",TRUE);
+    insert_entry_terminal(ht,"FALSE",FALSE);
+    insert_entry_terminal(ht,"TAKES",TAKES);
+    insert_entry_terminal(ht,"INPUT",INPUT);
+    insert_entry_terminal(ht,"RETURNS",RETURNS);
     insert_entry_terminal(ht,"AND",AND);
     insert_entry_terminal(ht,"OR",OR);
-    insert_entry_terminal(ht,"for",FOR);
-    insert_entry_terminal(ht,"in",IN);
-    insert_entry_terminal(ht,"switch",SWITCH);
-    insert_entry_terminal(ht,"case",CASE);
-    insert_entry_terminal(ht,"break",BREAK);
-    insert_entry_terminal(ht,"default",DEFAULT);
-    insert_entry_terminal(ht,"while",WHILE);
+    insert_entry_terminal(ht,"FOR",FOR);
+    insert_entry_terminal(ht,"IN",IN);
+    insert_entry_terminal(ht,"SWITCH",SWITCH);
+    insert_entry_terminal(ht,"CASE",CASE);
+    insert_entry_terminal(ht,"BREAK",BREAK);
+    insert_entry_terminal(ht,"DEFAULT",DEFAULT);
+    insert_entry_terminal(ht,"WHILE",WHILE);
 }
 
 
@@ -260,12 +258,12 @@ void add_nonterminals(hashtable *ht){
 
 // UNCOMMENT the following while testing
 
-
-const char* convert(Symbol sym){
-    if(gtag==2)
+/*
+const char* convert(tagged_union sym){
+    if(sym.tag==2)
         return "NT";
 
-    switch(sym.t_val)
+    switch(sym.value.t_val)
     {
         case PLUS: return "PLUS" ; break;
         case MINUS: return "MINUS" ; break;
@@ -323,17 +321,18 @@ const char* convert(Symbol sym){
         case CASE: return "CASE" ; break;
         case BREAK: return "BREAK" ; break;
         case DEFAULT: return "DEFAULT" ; break;
+        case EPSILON: return "EPSILON"; break;
         default: return "UNRECOGNIZED TOKEN"; break;
     }
 }
-
+*/
 
 // UNCOMMENT THE MAIN FUNCTION TO TEST THE MAPPING TABLE
 // NOTE: 1. RUN THIS FILE INDEPENDENTLY IF UNCOMMENTING OR ELSE THERE MIGHT BE CONFLICTING HASH TABLES WITH SAME NAME
 //       2. UNCOMMENT utility function convert for user friendly output
 //          Function protoype: const char* convert(Symbol sym);
 
-
+/*
 int main(){
 
     hashtable *ht = hashtable_create(HASH_SIZE);
@@ -341,11 +340,12 @@ int main(){
     add_nonterminals(ht);
     // Some Test Cases (Note that it will print ID for the keys that are not keywords)
     printf("\n");
-    printf("Input: integer  \tTOKEN: %s\n",convert(get_value(ht,"integer")));
+    printf("Input: INTEGER  \tTOKEN: %s\n",convert(get_value(ht,"INTEGER")));
     printf("Input: range    \tTOKEN: %s\n",convert(get_value(ht,"range")));
-    printf("Input: SWITCH   \tTOKEN: %s\n",convert(get_value(ht,"switch")));
-    printf("Input: compiler \tTOKEN: %s\n",convert(get_value(ht,"for")));
-    printf("Input: get_value\tTOKEN: %s\n",convert(get_value(ht,"program")));
+    printf("Input: SWITCH   \tTOKEN: %s\n",convert(get_value(ht,"SWITCH")));
+    printf("Input: FOR      \tTOKEN: %s\n",convert(get_value(ht,"FOR")));
+    printf("Input: PROGRAM  \tTOKEN: %s\n",convert(get_value(ht,"PROGRAM")));
+    printf("Input: program  \tTOKEN: %s\n",convert(get_value(ht,"program")));
     printf("Input: term_1   \tTOKEN: %s\n",convert(get_value(ht,"term_1")));
     printf("\n");
 
@@ -356,3 +356,4 @@ int main(){
     free(ht->table);
     free(ht);
 }
+*/

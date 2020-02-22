@@ -45,6 +45,11 @@ typedef struct {
     Datapair **table;
 }hashtable;
 
+typedef struct{
+  Symbol value;
+  int tag;
+}tagged_union;
+
 // Function prototypes
 hashtable* hashtable_create(int size);
 int hash_func(hashtable *ht, char* key );
@@ -52,8 +57,8 @@ Datapair* create_pair_terminal(char* key, TOKEN val);
 Datapair* create_pair_nonterminal(char* key, NON_TERMINAL val);
 void insert_entry_terminal(hashtable *ht, char* key, TOKEN val);
 void insert_entry_nonterminal(hashtable *ht, char* key, NON_TERMINAL val);
-Symbol get_value(hashtable *ht,char* key);
+tagged_union get_value(hashtable *ht,char* key);
 void add_terminals(hashtable *ht);
 void add_nonterminals(hashtable *ht);
-const char* convert(Symbol sym);
+const char* convert(tagged_union sym);
 

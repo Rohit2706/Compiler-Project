@@ -64,14 +64,14 @@ void readIntoArr(FILE* grammarRules, linkedList* arrLinkedList[]){
                 for(int i=beg;i<end;i++){
                     insert[i-beg]=line[i];    
                 }
-
+                tagged_union T = get_value(ht,insert);
                 if(flag==0){
-                    addLhs(arrLinkedList[currRow], get_value(ht,insert),gtag);
+                    addLhs(arrLinkedList[currRow], T.value,T.tag);
                     flag=1;
                 }
                 
                 else{
-                    addRhs(arrLinkedList[currRow], get_value(ht,insert),gtag);
+                    addRhs(arrLinkedList[currRow], T.value,T.tag);
                 }
                 
                 end++;
@@ -158,6 +158,7 @@ const char* convert2(Symbol sym, int tag){
         case CASE: return "CASE" ; break;
         case BREAK: return "BREAK" ; break;
         case DEFAULT: return "DEFAULT" ; break;
+        case EPSILON: return "EPSILON"; break;
         default: return "UNRECOGNIZED TOKEN"; break;
     }
 }
@@ -165,7 +166,7 @@ const char* convert2(Symbol sym, int tag){
 int main(){
 	ht = hashtable_create(HASH_SIZE);
 	add_terminals(ht);   
-  add_nonterminals(ht);
+    add_nonterminals(ht);
 
 	FILE* grammarFile= fopen("grammar.txt","r");
 
