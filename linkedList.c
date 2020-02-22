@@ -1,23 +1,21 @@
 
-typedef struct LinkedList{
-    Node* head;
-    Node* tail;
-}linkedList;
-
 typedef struct Node{
-    char data;
-    node* next;
-    node* prev;
+    char* data;
+    struct Node* next;
+    struct Node* prev;
 }node;
 
+typedef struct LinkedList{
+    node* head;
+    node* tail;
+}linkedList;
 
 linkedList* createLinkedList(){
     linkedList* lhsNode=(linkedList* )malloc(sizeof(linkedList));
     return lhsNode;
 }
 
-void addLhs(linkedList* inpLinkedList, char inpData){
-    
+void addLhs(linkedList* inpLinkedList, char* inpData){
     node* lhs=(node*)malloc(sizeof(node));
     lhs->data=inpData;
     lhs->next=NULL;
@@ -26,13 +24,12 @@ void addLhs(linkedList* inpLinkedList, char inpData){
     inpLinkedList->tail=lhs;
 }
 
-void addRhs(linkedList* inpLinkedList, char inpData){
+void addRhs(linkedList* inpLinkedList, char* inpData){
     node* rhs=(node*)malloc(sizeof(node));
     rhs->data=inpData;
     rhs->next=NULL;
     rhs->prev=inpLinkedList->tail;
     inpLinkedList->tail->next=rhs;
     inpLinkedList->tail=rhs;
-    
-}
 
+}
