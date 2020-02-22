@@ -1,3 +1,5 @@
+// This file implements the lexical analyser
+
 #include<stdlib.h>
 #include<stdio.h>
 #define buffer_size 5
@@ -11,7 +13,8 @@ int status = 1;
 int line_count = 1;
 int *flag;
 hashtable *ht;
-char* buffer1, *buffer2;
+char *buffer1, *buffer2;
+
 void getStream(char* buffer){
 	int size = fread(buffer, sizeof(char), buffer_size, file);
 	if(size!=buffer_size)
@@ -22,10 +25,13 @@ void getStream(char* buffer){
 TokenInfo failure(TokenInfo newToken, char ch){
   if(ch=='\0')
     return tokenGen(newToken, DOLLAR);
-  return tokenGen(newToken, ERROR);
+  newToken.lexeme[newToken.length] = '\0';
+  newToken.line_no = line_count;
+  printf("Found LEXICAL ERROR at line %d: invalid input '%s'\n",newToken.line_no, newToken.lexeme);
+  return getNextToken();
 }
 
-char getNextChar(char* buffer1, char* buffer2, char* lexeme, int* length){
+char getNextChar(char* lexeme, int* length){
     
   if(*forward !=EOF){
       forward++;
@@ -70,7 +76,7 @@ char getNextChar(char* buffer1, char* buffer2, char* lexeme, int* length){
   return *(forward-1);
 }
 
-void retract(char* buffer1, char* buffer2, char* lexeme, int* length){
+void retract(char* lexeme, int* length){
     
    if(forward==buffer2){
         *flag=1;
@@ -92,13 +98,7 @@ void retract(char* buffer1, char* buffer2, char* lexeme, int* length){
     lexeme[*length] = '\0';
 }
 
-TOKEN search_keyword(char* lexeme, int* length){
-  if(*length>20)
-    return ERROR;
 
-  return get_value(ht, lexeme);
-
-}
 TokenInfo tokenGen(TokenInfo newToken, TOKEN token_name){
     newToken.lexeme[newToken.length] = '\0';
     newToken.token = token_name;
@@ -116,7 +116,7 @@ TokenInfo tokenGen(TokenInfo newToken, TOKEN token_name){
     return newToken;
 }
 
-TokenInfo getNextToken(char* buffer1, char* buffer2){
+TokenInfo getNextToken(){
   TokenInfo newToken;
   newToken.length = 0;
   newToken.tag=0;
@@ -127,7 +127,7 @@ TokenInfo getNextToken(char* buffer1, char* buffer2){
   while(1){
     switch(*state){
     case 0:
-        c=getNextChar(buffer1, buffer2, newToken.lexeme, &(newToken.length));
+        c=getNextChar(newToken.lexeme, &(newToken.length));
 
         if((c>='a' && c<='z') || (c>='A' && c<='Z')) *state=1;
         else if(c==';') *state=3;
@@ -161,15 +161,18 @@ TokenInfo getNextToken(char* buffer1, char* buffer2){
         break;
     
     case 1:
-        c=getNextChar(buffer1, buffer2, newToken.lexeme, &(newToken.length));
+        c=getNextChar(newToken.lexeme, &(newToken.length));
         if((c>='a' && c<='z') || (c>='A' && c<='Z') || (c>='0' && c<='9') || c=='_') *state=1;
         else    *state=2;
 
         break;
     
     case 2:
-        retract(buffer1, buffer2, newToken.lexeme, &(newToken.length));
-        return tokenGen(newToken, search_keyword(newToken.lexeme, &(newToken.length)));
+        retract(newToken.lexeme, &(newToken.length));
+          if(newToken.length>20){
+            return failure(newToken, c);
+          }
+        return tokenGen(newToken, get_value(ht, newToken.lexeme));
 
         break;
     
@@ -179,28 +182,28 @@ TokenInfo getNextToken(char* buffer1, char* buffer2){
         break;
     
     case 4:
-        c=getNextChar(buffer1, buffer2, newToken.lexeme, &(newToken.length));
+        c=getNextChar(newToken.lexeme, &(newToken.length));
         if((c>='0' && c<='9'))    *state=4;
         else if(c=='.') *state=5;
         else *state=11;
         break;
     
     case 5:
-        c=getNextChar(buffer1, buffer2, newToken.lexeme, &(newToken.length));
+        c=getNextChar(newToken.lexeme, &(newToken.length));
         if((c>='0' && c<='9'))    *state=6;
         else if(c=='.'){
-            retract(buffer1, buffer2, newToken.lexeme, &(newToken.length));
-            retract(buffer1, buffer2, newToken.lexeme, &(newToken.length));
+            retract(newToken.lexeme, &(newToken.length));
+            retract(newToken.lexeme, &(newToken.length));
             return tokenGen(newToken, NUM);
         }
         else{
-          retract(buffer1, buffer2, newToken.lexeme, &(newToken.length));
+          retract(newToken.lexeme, &(newToken.length));
           return failure(newToken, c);
         }
         break;
         
     case 6:
-        c=getNextChar(buffer1, buffer2, newToken.lexeme, &(newToken.length));
+        c=getNextChar(newToken.lexeme, &(newToken.length));
         if((c>='0' && c<='9'))    *state=6;
         else if(c=='E' || c=='e')   *state=7;
         else *state=10;
@@ -208,48 +211,48 @@ TokenInfo getNextToken(char* buffer1, char* buffer2){
         break;
     
     case 7:
-        c=getNextChar(buffer1, buffer2, newToken.lexeme, &(newToken.length));
+        c=getNextChar(newToken.lexeme, &(newToken.length));
         if((c>='0' && c<='9'))    *state=9;
         else if(c=='+' || c=='-')   *state=8;
         else{
-          retract(buffer1, buffer2, newToken.lexeme, &(newToken.length));
+          retract(newToken.lexeme, &(newToken.length));
           return failure(newToken, c);
         }
         break;
         
     case 8:
-        c=getNextChar(buffer1, buffer2, newToken.lexeme, &(newToken.length));
+        c=getNextChar(newToken.lexeme, &(newToken.length));
         if((c>='0' && c<='9'))    *state=9;
         else{
-          retract(buffer1, buffer2, newToken.lexeme, &(newToken.length));
+          retract(newToken.lexeme, &(newToken.length));
           return failure(newToken, c);
         }
         break;
     
     case 9:
-        c=getNextChar(buffer1, buffer2, newToken.lexeme, &(newToken.length));
+        c=getNextChar(newToken.lexeme, &(newToken.length));
         if((c>='0' && c<='9'))    *state=9;
         else *state=10;
 
         break;
     
     case 10:
-        retract(buffer1, buffer2, newToken.lexeme, &(newToken.length));
+        retract(newToken.lexeme, &(newToken.length));
         return tokenGen(newToken, RNUM);
 
         break;
     
     case 11:
-        retract(buffer1, buffer2, newToken.lexeme, &(newToken.length));
+        retract(newToken.lexeme, &(newToken.length));
         return tokenGen(newToken, NUM);  
 
         break;
         
     case 12:
-        c=getNextChar(buffer1, buffer2, newToken.lexeme, &(newToken.length));
+        c=getNextChar(newToken.lexeme, &(newToken.length));
         if(c=='.')  *state=13;
         else{
-          retract(buffer1, buffer2, newToken.lexeme, &(newToken.length));
+          retract(newToken.lexeme, &(newToken.length));
           return failure(newToken, c);
         }
         break;
@@ -260,7 +263,7 @@ TokenInfo getNextToken(char* buffer1, char* buffer2){
         break;
     
     case 14:
-        c=getNextChar(buffer1, buffer2, newToken.lexeme, &(newToken.length));
+        c=getNextChar(newToken.lexeme, &(newToken.length));
         if(c=='*'){
           *state=15;
           newToken.length -= 2;
@@ -270,7 +273,7 @@ TokenInfo getNextToken(char* buffer1, char* buffer2){
         break;
         
     case 15:
-          c=getNextChar(buffer1, buffer2, newToken.lexeme, &(newToken.length));
+          c=getNextChar(newToken.lexeme, &(newToken.length));
          if(c=='*')    *state=16;
          else if(c=='\n'){
             line_count++;
@@ -284,7 +287,7 @@ TokenInfo getNextToken(char* buffer1, char* buffer2){
          break;
     
     case 16:
-         c=getNextChar(buffer1, buffer2, newToken.lexeme, &(newToken.length));
+         c=getNextChar(newToken.lexeme, &(newToken.length));
          if(c=='*'){
             *state=17;
          }
@@ -302,7 +305,7 @@ TokenInfo getNextToken(char* buffer1, char* buffer2){
          break; 
 
     case 18:
-        retract(buffer1, buffer2, newToken.lexeme, &(newToken.length));
+        retract(newToken.lexeme, &(newToken.length));
         return tokenGen(newToken, MUL);
 
         break;
@@ -324,10 +327,10 @@ TokenInfo getNextToken(char* buffer1, char* buffer2){
         break; 
     
     case 23:
-        c=getNextChar(buffer1, buffer2, newToken.lexeme, &(newToken.length));
+        c=getNextChar(newToken.lexeme, &(newToken.length));
         if(c=='=')  *state=24;
         else{
-          retract(buffer1, buffer2, newToken.lexeme, &(newToken.length));
+          retract(newToken.lexeme, &(newToken.length));
           return failure(newToken, c);
         }
         break;
@@ -337,10 +340,10 @@ TokenInfo getNextToken(char* buffer1, char* buffer2){
         break;
     
     case 25:
-        c=getNextChar(buffer1, buffer2, newToken.lexeme, &(newToken.length));
+        c=getNextChar(newToken.lexeme, &(newToken.length));
         if(c=='=')  *state=26;
         else{
-          retract(buffer1, buffer2, newToken.lexeme, &(newToken.length));
+          retract(newToken.lexeme, &(newToken.length));
           return failure(newToken, c);
         }
         break;
@@ -358,14 +361,14 @@ TokenInfo getNextToken(char* buffer1, char* buffer2){
         break; 
         
     case 29:
-        c=getNextChar(buffer1, buffer2, newToken.lexeme, &(newToken.length));
+        c=getNextChar(newToken.lexeme, &(newToken.length));
         if(c=='<')  *state=30;
         else if(c=='=') *state=31;
         else    *state=32;
         break;
     
     case 30:
-        c=getNextChar(buffer1, buffer2, newToken.lexeme, &(newToken.length));
+        c=getNextChar(newToken.lexeme, &(newToken.length));
         if(c=='<')  *state = 44;
         else  *state = 45;
         break; 
@@ -375,19 +378,19 @@ TokenInfo getNextToken(char* buffer1, char* buffer2){
         break; 
         
     case 32:
-        retract(buffer1, buffer2, newToken.lexeme, &(newToken.length));
+        retract(newToken.lexeme, &(newToken.length));
         return tokenGen(newToken, LT);
         break; 
     
     case 33:
-        c=getNextChar(buffer1, buffer2, newToken.lexeme, &(newToken.length));
+        c=getNextChar(newToken.lexeme, &(newToken.length));
         if(c=='>')  *state=34;
         else if(c=='=') *state=35;
         else    *state=36;
         break; 
     
     case 34:
-        c=getNextChar(buffer1, buffer2, newToken.lexeme, &(newToken.length));
+        c=getNextChar(newToken.lexeme, &(newToken.length));
         if(c=='>')  *state=46;
         else *state=47;
         break; 
@@ -397,12 +400,12 @@ TokenInfo getNextToken(char* buffer1, char* buffer2){
         break; 
         
     case 36:
-        retract(buffer1, buffer2, newToken.lexeme, &(newToken.length));
+        retract(newToken.lexeme, &(newToken.length));
         return tokenGen(newToken, GT);
         break; 
         
     case 37:
-        c=getNextChar(buffer1, buffer2, newToken.lexeme, &(newToken.length));
+        c=getNextChar(newToken.lexeme, &(newToken.length));
         if(c=='=')  *state=38;
         else    *state=39;
         break; 
@@ -412,7 +415,7 @@ TokenInfo getNextToken(char* buffer1, char* buffer2){
         break; 
         
     case 39:
-        retract(buffer1, buffer2, newToken.lexeme, &(newToken.length));
+        retract(newToken.lexeme, &(newToken.length));
         return tokenGen(newToken, COLON);
         break; 
     
@@ -431,7 +434,7 @@ TokenInfo getNextToken(char* buffer1, char* buffer2){
         break;
 
     case 43:
-        c=getNextChar(buffer1, buffer2, newToken.lexeme, &(newToken.length));
+        c=getNextChar(newToken.lexeme, &(newToken.length));
         if(c=='\n'){
           line_count++;
           *state=43;
@@ -446,7 +449,7 @@ TokenInfo getNextToken(char* buffer1, char* buffer2){
       break; 
 
     case 45:
-      retract(buffer1, buffer2, newToken.lexeme, &(newToken.length));
+      retract(newToken.lexeme, &(newToken.length));
       return tokenGen(newToken, DEF);
 
       break;
@@ -456,7 +459,7 @@ TokenInfo getNextToken(char* buffer1, char* buffer2){
       break;
 
     case 47:
-      retract(buffer1, buffer2, newToken.lexeme, &(newToken.length));
+      retract(newToken.lexeme, &(newToken.length));
       return tokenGen(newToken, ENDDEF);
 
       break;
@@ -465,7 +468,7 @@ TokenInfo getNextToken(char* buffer1, char* buffer2){
 }
 void driver(){
   file = NULL;
-  file = fopen("t3.txt","r");
+  file = fopen("t1.txt","r");
   if(file==NULL){
     printf("FILE NOT FOUND\n");
     return;
@@ -493,20 +496,28 @@ void enddriver(){
   free(buffer2);
   free(flag);
 }
+
 int main(){
   driver();
   if(file==NULL)
     return 0;
   TokenInfo mytoken;
-  while((mytoken = getNextToken(buffer1, buffer2)).token!= DOLLAR){
+
+  printf("\n");
+
+  while((mytoken = getNextToken()).token!= DOLLAR){
+    /*
     printf("Token:%s\t\tLexeme:%-15sLine:%d\t",convert(mytoken.token),mytoken.lexeme,mytoken.line_no);
     if(mytoken.tag==1)
       printf("Value: %d\n",mytoken.value.num_value);
     else if(mytoken.tag==2)
        printf("Value: %f\n",mytoken.value.rnum_value);
      else
-       printf("Value: None\n");
+       printf("Value: None\n");*/
   }
+
+  printf("\n");
+
   enddriver();
   return 0;
 }

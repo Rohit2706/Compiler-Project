@@ -31,10 +31,11 @@ typedef struct{
 }TokenInfo;
 
 // Functions declarations for lexer
-TokenInfo getNextToken(char* buffer1, char* buffer2);
+TokenInfo getNextToken();
 TokenInfo tokenGen(TokenInfo newToken, TOKEN token_name);
 void getStream(char* buffer);
 TokenInfo failure(TokenInfo newToken, char ch);
-char getNextChar(char* buffer1, char* buffer2, char* lexeme, int* length);
-void retract(char* buffer1, char* buffer2, char* lexeme, int* length);
+char getNextChar(char* lexeme, int* length);
+void retract(char* lexeme, int* length);
 TOKEN search_keyword(char* lexeme, int* length);
+const char* convert(TOKEN sym);
