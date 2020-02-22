@@ -3,6 +3,7 @@
 #define buffer_size 5
 #include<string.h>
 #include "lexer.h"
+#include "Hash_table.h"
 
 const char* convert(TOKEN sym){
     switch(sym)
@@ -34,7 +35,40 @@ const char* convert(TOKEN sym){
         case NUM: return "NUM" ; break;
         case RNUM: return "RNUM" ; break;
         case ERROR: return "ERROR" ; break;
-
+        case INTEGER: return "INTEGER" ; break;
+        case REAL: return "REAL" ; break;
+        case BOOLEAN: return "BOOLEAN" ; break;
+        case OF: return "OF" ; break;
+        case ARRAY: return "ARRAY" ; break;
+        case START: return "START" ; break;
+        case END: return "END" ; break;
+        case DECLARE: return "DECLARE" ; break;
+        case MODULE: return "MODULE" ; break;
+        case DRIVER: return "DRIVER" ; break;
+        case PROGRAM: return "PROGRAM" ; break;
+        case RECORD: return "RECORD" ; break;
+        case TAGGED: return "TAGGED" ; break;
+        case UNION: return "UNION" ; break;
+        case GET_VALUE: return "GET_VALUE" ; break;
+        case PRINT: return "PRINT" ; break;
+        case USE: return "USE" ; break;
+        case WITH: return "WITH" ; break;
+        case PARAMETERS: return "PARAMETERS" ; break;
+        case TRUE: return "TRUE" ; break;
+        case FALSE: return "FALSE" ; break;
+        case TAKES: return "TAKES" ; break;
+        case INPUT: return "INPUT" ; break;
+        case RETURNS: return "RETURNS" ; break;
+        case AND: return "AND" ; break;
+        case OR: return "OR" ; break;
+        case FOR: return "FOR" ; break;
+        case IN: return "IN" ; break;
+        case WHILE: return "WHILE"; break;
+        case SWITCH: return "SWITCH" ; break;
+        case CASE: return "CASE" ; break;
+        case BREAK: return "BREAK" ; break;
+        case DEFAULT: return "DEFAULT" ; break;
+        default: return "UNRECOGNIZED TOKEN"; break;
     }
 }
 
@@ -43,8 +77,8 @@ char* forward;
 int status = 1;
 int line_count = 1;
 int *flag;
-
-
+hashtable *ht;
+char* buffer1, *buffer2;
 void getStream(char* buffer){
 	int size = fread(buffer, sizeof(char), buffer_size, file);
 	if(size!=buffer_size)
@@ -103,49 +137,6 @@ char getNextChar(char* buffer1, char* buffer2, char* lexeme, int* length){
   return *(forward-1);
 }
 
-int main(){
-
- 	file = fopen("t1.txt","r");
-  int x = 0;
- 	char ch;
- 	flag=&x;
- 	char* buffer1 = (char*) malloc((buffer_size+1)*sizeof(char));
-	char* buffer2 = (char*) malloc((buffer_size+1)*sizeof(char));
-	buffer1[buffer_size] = EOF;
-	buffer2[buffer_size] = EOF;
-
-	getStream(buffer1);
-  /*comment1
-	char* lexeme = malloc(sizeof(char)*20);
-	int* length = malloc(sizeof(int));
-	*length = 0;
-	
- 	while((ch=getNextChar(buffer1, buffer2, lexeme, length))!='\0'){
- 		printf("%c",ch);
- 	}*/
-
-  TokenInfo mytoken;
-  while((mytoken = getNextToken(buffer1, buffer2)).token!= SUCCESS){ //&& mytoken.line_no<24){
-    printf("Token:%s\t\tLexeme:%-15sLine:%d\t",convert(mytoken.token),mytoken.lexeme,mytoken.line_no);
-    if(mytoken.tag==1)
-      printf("Value: %d\n",mytoken.value.num_value);
-    else if(mytoken.tag==2)
-       printf("Value: %f\n",mytoken.value.rnum_value);
-     else
-       printf("Value: None\n");//,mytoken.value.num_value);
-  }
-
-  //printf("%d",  line_count);
- 	fclose(file);
-  free(buffer1);
-  free(buffer2);
-  /*comment1
-  free(lexeme);
-  free(length);
-  */
-  return 0;
-}
-
 void retract(char* buffer1, char* buffer2, char* lexeme, int* length){
     
    if(forward==buffer2){
@@ -165,10 +156,15 @@ void retract(char* buffer1, char* buffer2, char* lexeme, int* length){
         *length=*length-1;
     }
     
+    lexeme[*length] = '\0';
 }
 
-TOKEN search_keyword(char* lexeme){
-  return ID;
+TOKEN search_keyword(char* lexeme, int* length){
+  if(*length>20)
+    return ERROR;
+
+  return get_value(ht, lexeme);
+
 }
 TokenInfo tokenGen(TokenInfo newToken, TOKEN token_name){
     newToken.lexeme[newToken.length] = '\0';
@@ -240,7 +236,7 @@ TokenInfo getNextToken(char* buffer1, char* buffer2){
     
     case 2:
         retract(buffer1, buffer2, newToken.lexeme, &(newToken.length));
-        return tokenGen(newToken, search_keyword(newToken.lexeme));
+        return tokenGen(newToken, search_keyword(newToken.lexeme, &(newToken.length)));
 
         break;
     
@@ -533,4 +529,51 @@ TokenInfo getNextToken(char* buffer1, char* buffer2){
       break;
   }
 }
+}
+void driver(){
+  file = NULL;
+  file = fopen("t3.txt","r");
+  if(file==NULL){
+    printf("FILE NOT FOUND\n");
+    return;
+  }
+  flag= (int*) malloc(sizeof(int));
+  
+  buffer1 = (char*) malloc((buffer_size+1)*sizeof(char));
+  buffer2 = (char*) malloc((buffer_size+1)*sizeof(char));
+  buffer1[buffer_size] = EOF;
+  buffer2[buffer_size] = EOF;
+
+  ht = hashtable_create(HASH_SIZE);
+  add_keywords(ht);
+
+  getStream(buffer1);
+}
+
+void enddriver(){
+  for(int i=0;i<HASH_SIZE;i++)
+        free(ht->table[i]);
+  free(ht->table);
+  free(ht);
+  fclose(file);
+  free(buffer1);
+  free(buffer2);
+  free(flag);
+}
+int main(){
+  driver();
+  if(file==NULL)
+    return 0;
+  TokenInfo mytoken;
+  while((mytoken = getNextToken(buffer1, buffer2)).token!= SUCCESS){
+    printf("Token:%s\t\tLexeme:%-15sLine:%d\t",convert(mytoken.token),mytoken.lexeme,mytoken.line_no);
+    if(mytoken.tag==1)
+      printf("Value: %d\n",mytoken.value.num_value);
+    else if(mytoken.tag==2)
+       printf("Value: %f\n",mytoken.value.rnum_value);
+     else
+       printf("Value: None\n");
+  }
+  enddriver();
+  return 0;
 }

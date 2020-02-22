@@ -1,9 +1,18 @@
+// This file implements the lexical analyser
+
 #include<stdlib.h>
 #include<stdio.h>
 
 // TOKEN is an enum variable for possible tokens in the ERPLAG language
-typedef enum{PLUS, MINUS, MUL, DIV, LT, LE, GE, GT, EQ, NE, DRIVERDEF, DRIVERENDDEF, DEF, ENDDEF, COLON, RANGEOP, SEMICOL, COMMA, ASSIGNOP, SQBO, SQBC, BO, BC, ID, NUM, RNUM, ERROR, SUCCESS} TOKEN;
-
+#ifndef tokens
+#define tokens
+typedef enum{INTEGER,REAL,BOOLEAN,OF,ARRAY,START,END,DECLARE,MODULE,DRIVER,PROGRAM,RECORD,TAGGED,UNION,GET_VALUE,
+             PRINT,USE,WITH,PARAMETERS,TRUE,FALSE,TAKES,INPUT,RETURNS,AND,OR,FOR,IN,SWITCH,CASE,BREAK,DEFAULT,WHILE,
+             PLUS, MINUS, MUL, DIV, LT, LE, GE, GT, EQ, NE, DRIVERDEF, DRIVERENDDEF, DEF, ENDDEF, COLON, RANGEOP, 
+             SEMICOL, COMMA, ASSIGNOP, SQBO, SQBC, BO, BC, ID, NUM, RNUM, ERROR, SUCCESS
+             } TOKEN;
+#endif
+             
 // VALUE is a tagged union that stores the numeric value for lexemes of type NUM(tag=1) and RNUM(tage=2). For others VALUE is displayed as none(tag=0)
 typedef union{
 	uint num_value;
@@ -27,4 +36,4 @@ void getStream(char* buffer);
 TokenInfo failure(TokenInfo newToken, char ch);
 char getNextChar(char* buffer1, char* buffer2, char* lexeme, int* length);
 void retract(char* buffer1, char* buffer2, char* lexeme, int* length);
-TOKEN search_keyword(char* lexeme);
+TOKEN search_keyword(char* lexeme, int* length);
