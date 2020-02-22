@@ -204,8 +204,7 @@ const char* convert(TOKEN sym){
 
 // UNCOMMENT THE MAIN FUNCTION TO TEST THE HASH TABLE FOR KEYWORDS 
 // NOTE: 1. RUN THIS FILE INDEPENDENTLY IF UNCOMMENTING OR ELSE THERE MIGHT BE CONFLICTING HASH TABLES WITH SAME NAME
-//       2. UNCOMMENT the enum declaration for tokens
-//       3. UNCOMMENT utility function convert for user friendly output
+//       2. UNCOMMENT utility function convert for user friendly output
 //          Function protoype: const char* convert(TOKEN sym);
 
 /*

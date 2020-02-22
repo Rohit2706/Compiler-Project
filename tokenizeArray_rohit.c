@@ -1,8 +1,8 @@
-
 #include<stdio.h>
 #include<string.h>
 #include<stdlib.h>
-#define HASH_SIZE 57
+#define HASH_SIZE 91
+#define INT_MAX 2147483647
 
 typedef enum{INTEGER,REAL,BOOLEAN,OF,ARRAY,START,END,DECLARE,MODULE,DRIVER,PROGRAM,GET_VALUE,PRINT,USE,
              WITH,PARAMETERS,TRUE,FALSE,TAKES,INPUT,RETURNS,AND,OR,FOR,IN,SWITCH,CASE,BREAK,DEFAULT,WHILE,
@@ -12,7 +12,7 @@ typedef enum{INTEGER,REAL,BOOLEAN,OF,ARRAY,START,END,DECLARE,MODULE,DRIVER,PROGR
 
 typedef enum{PROGRAM_NT,MODULEDECLARATIONS,MODULEDECLARATION,OTHERMODULES,DRIVERMODULE,MODULE_NT,RET,INPUT_PLIST,
              INPUT_PLIST_1,OUTPUT_PLIST,OUTPUT_PLIST_1,DATATYPE,TYPE,MODULEDEF,STATEMENTS,STATEMENT,IOSTMT,VAR,
-             VAR_ID_NUM,BOOLCONST,WHICHID,SIMPLESTMT,ASSIGNMENTSTMT,WHICHSTMT,LVALUEIDSTMT,LVALUEARRSTMT,INDEX,
+             VAR_ID_NUM,BOOLCONSTT,WHICHID,SIMPLESTMT,ASSIGNMENTSTMT,WHICHSTMT,LVALUEIDSTMT,LVALUEARRSTMT,INDEX,
              MODULEREUSESTMT,OPTIONAL,IDLIST,IDLIST_1,EXPRESSION,U,U_1,ARMORBOOL,N7,ANYTERM,N8,ARITHMETICEXPR,
              ARITHMETICEXPR_1,TERM,TERM_1,FACTOR,OP1,OP2,LOGICALOP,RELATIONALOP,DECLARESTMT,CONDITIONALSTMT,CASESTMT,
              CASESTMT_1,VALUE,DEFAULT_NT,ITERATIVESTMT,RANGE_ARRAYS,RANGE} NON_TERMINAL;
@@ -22,38 +22,30 @@ typedef union symbol{
 
     NON_TERMINAL nt_val;
     TOKEN t_val;
-}SYMBOL;
+}Symbol;
 
-// Datapair2 is a structure that stores the key-value pair
-typedef struct Datapair2 {
+typedef struct Datapair {
    char* key;   
    Symbol value;
    int tag;
-   struct Datapair2 *next;
-}Datapair2;
+   struct Datapair *next;
+}Datapair;
 
-// hashtable2 is a data structure containing all the Datapairs 
+// hashtable is a data structure containing all the Datapairs 
 typedef struct {
     int size;
-    Datapair2 **table;
-}hashtable2;
-
-// Function prototypes
-
-hashtable2* hashtable_create2(int size);
-int hash_func2(hashtable2 *ht, char* key);
-Datapair2* create_pair2(char* key, Symbol val);
-void insert_entry2_terminal(hashtable2 *ht, char* key, Symbol val);
-Symbol get_value2(hashtable2 *ht,char* key);
-void add_keywords2(hashtable2 *ht);
+    Datapair **table;
+}hashtable;
 
 
 
+
+int gtag = 0;
 // 1. To create hash table
-hashtable2* hashtable_create2(int size){
+hashtable* hashtable_create(int size){
 
-    hashtable2 *newtable = (hashtable2 *)malloc(sizeof(hashtable2));
-    newtable->table = (Datapair2 **)malloc(sizeof(Datapair2*) * size);
+    hashtable *newtable = (hashtable *)malloc(sizeof(hashtable));
+    newtable->table = (Datapair **)malloc(sizeof(Datapair*) * size);
 
     for(int i=0;i<size;i++)
         newtable->table[i]=NULL;
@@ -71,7 +63,7 @@ hashtable2* hashtable_create2(int size){
 // [bit(c1) bit(c2) bit(c3)] % (size of hash table)
 // where bit(c) is the bit representation of the ASCII value of c
 
-int hash_func2(hashtable2 *ht, char* key ){
+int hash_func(hashtable *ht, char* key ){
 
     int hashvalue=0,i=0;
 
@@ -85,40 +77,40 @@ int hash_func2(hashtable2 *ht, char* key ){
 }
 
 
-// 3. to create the key-value Datapair2
-Datapair2* create_pair2_terminal(char* key, TOKEN val){
+// 3. to create the key-value Datapair
+Datapair* create_pair_terminal(char* key, TOKEN val){
 
-    Datapair2 *newpair = malloc(sizeof(Datapair2));
+    Datapair *newpair = malloc(sizeof(Datapair));
     newpair->value.t_val = val;
     newpair->key = strdup(key);
     newpair->tag = 1;
     return newpair;
 }
 
-Datapair2* create_pair2_nonterminal(char* key, NON_TERMINAL val){
+Datapair* create_pair_nonterminal(char* key, NON_TERMINAL val){
 
-    Datapair2 *newpair = malloc(sizeof(Datapair2));
+    Datapair *newpair = malloc(sizeof(Datapair));
     newpair->value.nt_val = val;
     newpair->key = strdup(key);
-    newpair->tag = 0;
+    newpair->tag = 2;
     return newpair;
 }
 
-// 4. To insert an entry in the hashtable2
-void insert_entry2_terminal(hashtable2 *ht, char* key, TOKEN val){
+// 4. To insert an entry in the hashtable
+void insert_entry_terminal(hashtable *ht, char* key, TOKEN val){
 
     
-    int hashval =hash_func2(ht,key);
+    int hashval =hash_func(ht,key);
 
-    Datapair2 *end=NULL;
-    Datapair2 *next = ht->table[hashval];
+    Datapair *end=NULL;
+    Datapair *next = ht->table[hashval];
     
     while(next!=NULL && next->key!=NULL && strcmp(key,next->key) > 0){
         end = next;
         next = next->next;
     }
 
-    Datapair2 *newpair = create_pair2_terminal(key,val);
+    Datapair *newpair = create_pair_terminal(key,val);
 
     if(next == ht->table[hashval]){
         newpair->next = next;
@@ -133,20 +125,20 @@ void insert_entry2_terminal(hashtable2 *ht, char* key, TOKEN val){
 
 }
 
-void insert_entry2_nonterminal(hashtable2 *ht, char* key, NON_TERMINAL val){
+void insert_entry_nonterminal(hashtable *ht, char* key, NON_TERMINAL val){
 
     
-    int hashval =hash_func2(ht,key);
+    int hashval =hash_func(ht,key);
 
-    Datapair2 *end=NULL;
-    Datapair2 *next = ht->table[hashval];
+    Datapair *end=NULL;
+    Datapair *next = ht->table[hashval];
     
     while(next!=NULL && next->key!=NULL && strcmp(key,next->key) > 0){
         end = next;
         next = next->next;
     }
 
-    Datapair2 *newpair = create_pair2_nonterminal(key,val);
+    Datapair *newpair = create_pair_nonterminal(key,val);
 
     if(next == ht->table[hashval]){
         newpair->next = next;
@@ -162,22 +154,23 @@ void insert_entry2_nonterminal(hashtable2 *ht, char* key, NON_TERMINAL val){
 }
 
 // 5. To get the value given a key
-Symbol get_value2(hashtable2 *ht,char* key){
+Symbol get_value2(hashtable *ht,char* key){
 
-    Datapair2* pair = NULL;
-    int hashvalue =hash_func2(ht,key);
+    Datapair* pair = NULL;
+    int hashvalue =hash_func(ht,key);
 
     pair = ht->table[hashvalue];
     while(pair!=NULL && pair->key !=NULL && strcmp(key,pair->key) > 0){
         pair = pair->next;
     }
 
+    gtag = pair->tag;
     return pair->value;
     
 }
 
 
-void add_terminals(hashtable2 *ht){
+void add_terminals(hashtale *ht){
     insert_entry2_terminal(ht,"PLUS",PLUS);
     insert_entry2_terminal(ht,"MINUS",MINUS);
     insert_entry2_terminal(ht,"MUL",MUL);
@@ -239,7 +232,7 @@ void add_terminals(hashtable2 *ht){
 }
 
 
-void add_nonterminals(hashtable1 *ht){
+void add_nonterminals(hastable *ht){
 
      insert_entry2_nonterminal(ht,"program",PROGRAM_NT);
      insert_entry2_nonterminal(ht,"moduleDeclarations",MODULEDECLARATIONS);
@@ -300,8 +293,11 @@ void add_nonterminals(hashtable1 *ht){
 
 }
 
-const char* convert(SYMBOL sym){
-    switch(sym)
+const char* convert(Symbol sym){
+    if(gtag==2)
+        return "NT";
+
+    switch(sym.t_val)
     {
         case PLUS: return "PLUS" ; break;
         case MINUS: return "MINUS" ; break;
@@ -363,7 +359,27 @@ const char* convert(SYMBOL sym){
     }
 }
 
+int main(){(HASH_SIZE);
+    add_terminals(ht);   
+    add_nonterminals(ht);
+    // Some Test Cases (Note that it will print ID for the keys that are not keywords)
+    printf("\n");
+    printf("Input: integer  \tTOKEN: %s\n",convert(get_value2(ht,"integer")));
+    printf("Input: range    \tTOKEN: %s\n",convert(get_value2(ht,"range")));
+    printf("Input: SWITCH   \tTOKEN: %s\n",convert(get_value2(ht,"switch")));
+    printf("Input: compiler \tTOKEN: %s\n",convert(get_value2(ht,"for")));
+    printf("Input: get_value\tTOKEN: %s\n",convert(get_value2(ht,"program")));
+    printf("Input: term_1   \tTOKEN: %s\n",convert(get_value2(ht,"term_1")));
+    printf("\n");
 
+    // Free memory
+
+    for(int i=0;i<HASH_SIZE;i++)
+        free(ht->table[i]);
+    free(ht->table);
+    free(ht);
+    
+}
 
 
 
@@ -424,7 +440,7 @@ void readIntoArr(FILE* grammarRules, linkedList** arrLinkedList){
     hashtable1* ht1=hashtable_create1(57);
     add_keywords1(ht1);
 
-    hashtable2* ht2=hashtable_create2(57);
+    hashtable* ht2=hashtable_create(57);
     add_keywords2(ht2);
 
     char line[1000]={'#'};

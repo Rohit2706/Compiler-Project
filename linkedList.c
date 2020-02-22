@@ -31,5 +31,4 @@ void addRhs(linkedList* inpLinkedList, char* inpData){
     rhs->prev=inpLinkedList->tail;
     inpLinkedList->tail->next=rhs;
     inpLinkedList->tail=rhs;
-
 }

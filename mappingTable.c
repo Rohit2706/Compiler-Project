@@ -1,0 +1,358 @@
+// This file implements the mapping table for terminals and non-terminals
+
+#include "mappingTable.h"
+
+int gtag = 0;
+
+// Function Definations
+
+// 1. To create hash table
+hashtable* hashtable_create(int size){
+
+    hashtable *newtable = (hashtable *)malloc(sizeof(hashtable));
+    newtable->table = (Datapair **)malloc(sizeof(Datapair*) * size);
+
+    for(int i=0;i<size;i++)
+        newtable->table[i]=NULL;
+
+    newtable->size = size;
+
+    return newtable;
+
+}
+
+// 2. To design hash function.
+// About the hash function:
+// If key is c1c2c3 where c1, c2, c3 are characters
+// Then the hash value is decimal equivalent of
+// [bit(c1) bit(c2) bit(c3)] % (size of hash table)
+// where bit(c) is the bit representation of the ASCII value of c
+
+int hash_func(hashtable *ht, char* key ){
+
+    int hashvalue=0,i=0;
+
+    while(hashvalue<INT_MAX && i< strlen(key) ){
+        hashvalue = hashvalue << 8;
+        hashvalue +=key[i];
+        i++;
+    }
+
+    return (hashvalue%(ht->size));
+}
+
+
+// 3. to create the key-value Datapair
+Datapair* create_pair_terminal(char* key, TOKEN val){
+
+    Datapair *newpair = malloc(sizeof(Datapair));
+    newpair->value.t_val = val;
+    newpair->key = strdup(key);
+    newpair->tag = 1;
+    return newpair;
+}
+
+Datapair* create_pair_nonterminal(char* key, NON_TERMINAL val){
+
+    Datapair *newpair = malloc(sizeof(Datapair));
+    newpair->value.nt_val = val;
+    newpair->key = strdup(key);
+    newpair->tag = 2;
+    return newpair;
+}
+
+// 4. To insert an entry in the hashtable
+void insert_entry_terminal(hashtable *ht, char* key, TOKEN val){
+
+    
+    int hashval =hash_func(ht,key);
+
+    Datapair *end=NULL;
+    Datapair *next = ht->table[hashval];
+    
+    while(next!=NULL && next->key!=NULL && strcmp(key,next->key) > 0){
+        end = next;
+        next = next->next;
+    }
+
+    Datapair *newpair = create_pair_terminal(key,val);
+
+    if(next == ht->table[hashval]){
+        newpair->next = next;
+        ht->table[hashval] = newpair;
+        }
+        else if(next == NULL){
+            end->next = newpair; 
+        }   else{
+                newpair->next = next;
+                end->next = newpair;
+        }
+
+}
+
+void insert_entry_nonterminal(hashtable *ht, char* key, NON_TERMINAL val){
+
+    
+    int hashval =hash_func(ht,key);
+
+    Datapair *end=NULL;
+    Datapair *next = ht->table[hashval];
+    
+    while(next!=NULL && next->key!=NULL && strcmp(key,next->key) > 0){
+        end = next;
+        next = next->next;
+    }
+
+    Datapair *newpair = create_pair_nonterminal(key,val);
+
+    if(next == ht->table[hashval]){
+        newpair->next = next;
+        ht->table[hashval] = newpair;
+        }
+        else if(next == NULL){
+            end->next = newpair; 
+        }   else{
+                newpair->next = next;
+                end->next = newpair;
+        }
+
+}
+
+// 5. To get the value given a key
+Symbol get_value(hashtable *ht,char* key){
+
+    Datapair* pair = NULL;
+    int hashvalue =hash_func(ht,key);
+
+    pair = ht->table[hashvalue];
+    while(pair!=NULL && pair->key !=NULL && strcmp(key,pair->key) > 0){
+        pair = pair->next;
+    }
+
+    gtag = pair->tag;
+    return pair->value;
+    
+}
+
+// 6. To add terminals and non-terminals
+void add_terminals(hashtable *ht){
+    insert_entry_terminal(ht,"PLUS",PLUS);
+    insert_entry_terminal(ht,"MINUS",MINUS);
+    insert_entry_terminal(ht,"MUL",MUL);
+    insert_entry_terminal(ht,"DIV",DIV);
+    insert_entry_terminal(ht,"LT",LT);
+    insert_entry_terminal(ht,"LE",LE);
+    insert_entry_terminal(ht,"GE",GE);
+    insert_entry_terminal(ht,"GT",GT);
+    insert_entry_terminal(ht,"EQ",EQ);
+    insert_entry_terminal(ht,"NE",NE);
+    insert_entry_terminal(ht,"DRIVERDEF",DRIVERDEF);
+    insert_entry_terminal(ht,"DRIVERENDDEF",DRIVERENDDEF);
+    insert_entry_terminal(ht,"DEF",DEF);
+    insert_entry_terminal(ht,"ENDDEF",ENDDEF);
+    insert_entry_terminal(ht,"COLON",COLON);
+    insert_entry_terminal(ht,"RANGEOP",RANGEOP);
+    insert_entry_terminal(ht,"SEMICOL",SEMICOL);
+    insert_entry_terminal(ht,"COMMA",COMMA);
+    insert_entry_terminal(ht,"ASSIGNOP",ASSIGNOP);
+    insert_entry_terminal(ht,"SQBO",SQBO);
+    insert_entry_terminal(ht,"SQBC",SQBC);
+    insert_entry_terminal(ht,"BO",BO);
+    insert_entry_terminal(ht,"BC",BC);
+    insert_entry_terminal(ht,"ID",ID);
+    insert_entry_terminal(ht,"NUM",NUM);
+    insert_entry_terminal(ht,"RNUM",RNUM);
+    insert_entry_terminal(ht,"EPSILON",EPSILON);
+    insert_entry_terminal(ht,"DOLLAR",DOLLAR);
+    insert_entry_terminal(ht,"integer",INTEGER);
+    insert_entry_terminal(ht,"real",REAL);
+    insert_entry_terminal(ht,"boolean",BOOLEAN);
+    insert_entry_terminal(ht,"of",OF);
+    insert_entry_terminal(ht,"array",ARRAY);
+    insert_entry_terminal(ht,"start",START);
+    insert_entry_terminal(ht,"end",END);
+    insert_entry_terminal(ht,"declare",DECLARE);
+    insert_entry_terminal(ht,"module",MODULE);
+    insert_entry_terminal(ht,"driver",DRIVER);
+    insert_entry_terminal(ht,"program",PROGRAM);
+    insert_entry_terminal(ht,"get_value",GET_VALUE);
+    insert_entry_terminal(ht,"print",PRINT);
+    insert_entry_terminal(ht,"use",USE);
+    insert_entry_terminal(ht,"with",WITH);
+    insert_entry_terminal(ht,"parameters",PARAMETERS);
+    insert_entry_terminal(ht,"true",TRUE);
+    insert_entry_terminal(ht,"false",FALSE);
+    insert_entry_terminal(ht,"takes",TAKES);
+    insert_entry_terminal(ht,"input",INPUT);
+    insert_entry_terminal(ht,"returns",RETURNS);
+    insert_entry_terminal(ht,"AND",AND);
+    insert_entry_terminal(ht,"OR",OR);
+    insert_entry_terminal(ht,"for",FOR);
+    insert_entry_terminal(ht,"in",IN);
+    insert_entry_terminal(ht,"switch",SWITCH);
+    insert_entry_terminal(ht,"case",CASE);
+    insert_entry_terminal(ht,"break",BREAK);
+    insert_entry_terminal(ht,"default",DEFAULT);
+    insert_entry_terminal(ht,"while",WHILE);
+}
+
+
+void add_nonterminals(hashtable *ht){
+
+     insert_entry_nonterminal(ht,"program",PROGRAM_NT);
+     insert_entry_nonterminal(ht,"moduleDeclarations",MODULEDECLARATIONS);
+     insert_entry_nonterminal(ht,"moduleDeclaration",MODULEDECLARATION);
+     insert_entry_nonterminal(ht,"otherModules",OTHERMODULES);
+     insert_entry_nonterminal(ht,"driverModule",DRIVERMODULE);
+     insert_entry_nonterminal(ht,"module",MODULE_NT);
+     insert_entry_nonterminal(ht,"ret",RET);
+     insert_entry_nonterminal(ht,"input_plist",INPUT_PLIST);
+     insert_entry_nonterminal(ht,"input_plist_1",INPUT_PLIST_1);
+     insert_entry_nonterminal(ht,"output_plist",OUTPUT_PLIST);
+     insert_entry_nonterminal(ht,"output_plist_1",OUTPUT_PLIST_1);
+     insert_entry_nonterminal(ht,"dataType",DATATYPE);
+     insert_entry_nonterminal(ht,"type",TYPE);
+     insert_entry_nonterminal(ht,"moduleDef",MODULEDEF);
+     insert_entry_nonterminal(ht,"statements",STATEMENTS);
+     insert_entry_nonterminal(ht,"statement",STATEMENT);
+     insert_entry_nonterminal(ht,"ioStmt",IOSTMT);
+     insert_entry_nonterminal(ht,"var",VAR);
+     insert_entry_nonterminal(ht,"var_id_num",VAR_ID_NUM);
+     insert_entry_nonterminal(ht,"boolConstt",BOOLCONSTT);
+     insert_entry_nonterminal(ht,"whichId",WHICHID);
+     insert_entry_nonterminal(ht,"simpleStmt",SIMPLESTMT);
+     insert_entry_nonterminal(ht,"assignmentStmt",ASSIGNMENTSTMT);
+     insert_entry_nonterminal(ht,"whichStmt",WHICHSTMT);
+     insert_entry_nonterminal(ht,"lvalueIDStmt",LVALUEIDSTMT);
+     insert_entry_nonterminal(ht,"lvalueARRStmt",LVALUEARRSTMT);
+     insert_entry_nonterminal(ht,"index",INDEX);
+     insert_entry_nonterminal(ht,"moduleReuseStmt",MODULEREUSESTMT);
+     insert_entry_nonterminal(ht,"optional",OPTIONAL);
+     insert_entry_nonterminal(ht,"idList",IDLIST);
+     insert_entry_nonterminal(ht,"idList_1",IDLIST_1);
+     insert_entry_nonterminal(ht,"expression",EXPRESSION);
+     insert_entry_nonterminal(ht,"U",U);
+     insert_entry_nonterminal(ht,"U_1",U_1);
+     insert_entry_nonterminal(ht,"armOrbool",ARMORBOOL);
+     insert_entry_nonterminal(ht,"N7",N7);
+     insert_entry_nonterminal(ht,"AnyTerm",ANYTERM);
+     insert_entry_nonterminal(ht,"N8",N8);
+     insert_entry_nonterminal(ht,"arithmeticExpr",ARITHMETICEXPR);
+     insert_entry_nonterminal(ht,"arithmeticExpr_1",ARITHMETICEXPR_1);
+     insert_entry_nonterminal(ht,"term",TERM);
+     insert_entry_nonterminal(ht,"term_1",TERM_1);
+     insert_entry_nonterminal(ht,"factor",FACTOR);
+     insert_entry_nonterminal(ht,"op1",OP1);
+     insert_entry_nonterminal(ht,"op2",OP2);
+     insert_entry_nonterminal(ht,"logicalOp",LOGICALOP);
+     insert_entry_nonterminal(ht,"relationalOp",RELATIONALOP);
+     insert_entry_nonterminal(ht,"declareStmt",DECLARESTMT);
+     insert_entry_nonterminal(ht,"conditionalStmt",CONDITIONALSTMT);
+     insert_entry_nonterminal(ht,"caseStmt",CASESTMT);
+     insert_entry_nonterminal(ht,"caseStmt_1",CASESTMT_1);
+     insert_entry_nonterminal(ht,"value",VALUE);
+     insert_entry_nonterminal(ht,"default",DEFAULT_NT);
+     insert_entry_nonterminal(ht,"iterativeStmt",ITERATIVESTMT);
+     insert_entry_nonterminal(ht,"range_arrays",RANGE_ARRAYS);
+     insert_entry_nonterminal(ht,"range",RANGE);
+
+}
+
+// UNCOMMENT the following while testing
+
+
+const char* convert(Symbol sym){
+    if(gtag==2)
+        return "NT";
+
+    switch(sym.t_val)
+    {
+        case PLUS: return "PLUS" ; break;
+        case MINUS: return "MINUS" ; break;
+        case MUL: return "MUL" ; break;
+        case DIV: return "DIV" ; break;
+        case LT: return "LT" ; break;
+        case LE: return "LE" ; break;
+        case GE: return "GE" ; break;
+        case GT: return "GT" ; break;
+        case EQ: return "EQ" ; break;
+        case NE: return "NE" ; break;
+        case DEF: return "DEF" ; break;
+        case ENDDEF: return "ENDDEF" ; break;
+        case DRIVERDEF: return "DRIVERDEF" ; break;
+        case DRIVERENDDEF: return "DRIVERENDDEF" ; break;
+        case COLON: return "COLON" ; break;
+        case RANGEOP: return "RANGEOP" ; break;
+        case SEMICOL: return "SEMICOL" ; break;
+        case COMMA: return "COMMA" ; break;
+        case ASSIGNOP: return "ASSIGNOP" ; break;
+        case SQBO: return "SQBO" ; break;
+        case SQBC: return "SQBC" ; break;
+        case BO: return "BO" ; break;
+        case BC: return "BC" ; break;
+        case ID: return "ID" ; break;
+        case NUM: return "NUM" ; break;
+        case RNUM: return "RNUM" ; break;
+        case INTEGER: return "INTEGER" ; break;
+        case REAL: return "REAL" ; break;
+        case BOOLEAN: return "BOOLEAN" ; break;
+        case OF: return "OF" ; break;
+        case ARRAY: return "ARRAY" ; break;
+        case START: return "START" ; break;
+        case END: return "END" ; break;
+        case DECLARE: return "DECLARE" ; break;
+        case MODULE: return "MODULE" ; break;
+        case DRIVER: return "DRIVER" ; break;
+        case PROGRAM: return "PROGRAM" ; break;
+        case GET_VALUE: return "GET_VALUE" ; break;
+        case PRINT: return "PRINT" ; break;
+        case USE: return "USE" ; break;
+        case WITH: return "WITH" ; break;
+        case PARAMETERS: return "PARAMETERS" ; break;
+        case TRUE: return "TRUE" ; break;
+        case FALSE: return "FALSE" ; break;
+        case TAKES: return "TAKES" ; break;
+        case INPUT: return "INPUT" ; break;
+        case RETURNS: return "RETURNS" ; break;
+        case AND: return "AND" ; break;
+        case OR: return "OR" ; break;
+        case FOR: return "FOR" ; break;
+        case IN: return "IN" ; break;
+        case WHILE: return "WHILE"; break;
+        case SWITCH: return "SWITCH" ; break;
+        case CASE: return "CASE" ; break;
+        case BREAK: return "BREAK" ; break;
+        case DEFAULT: return "DEFAULT" ; break;
+        default: return "UNRECOGNIZED TOKEN"; break;
+    }
+}
+
+
+// UNCOMMENT THE MAIN FUNCTION TO TEST THE MAPPING TABLE
+// NOTE: 1. RUN THIS FILE INDEPENDENTLY IF UNCOMMENTING OR ELSE THERE MIGHT BE CONFLICTING HASH TABLES WITH SAME NAME
+//       2. UNCOMMENT utility function convert for user friendly output
+//          Function protoype: const char* convert(Symbol sym);
+
+
+int main(){
+
+    hashtable *ht = hashtable_create(HASH_SIZE);
+    add_terminals(ht);   
+    add_nonterminals(ht);
+    // Some Test Cases (Note that it will print ID for the keys that are not keywords)
+    printf("\n");
+    printf("Input: integer  \tTOKEN: %s\n",convert(get_value(ht,"integer")));
+    printf("Input: range    \tTOKEN: %s\n",convert(get_value(ht,"range")));
+    printf("Input: SWITCH   \tTOKEN: %s\n",convert(get_value(ht,"switch")));
+    printf("Input: compiler \tTOKEN: %s\n",convert(get_value(ht,"for")));
+    printf("Input: get_value\tTOKEN: %s\n",convert(get_value(ht,"program")));
+    printf("Input: term_1   \tTOKEN: %s\n",convert(get_value(ht,"term_1")));
+    printf("\n");
+
+    // Free memory
+
+    for(int i=0;i<HASH_SIZE;i++)
+        free(ht->table[i]);
+    free(ht->table);
+    free(ht);
+}
