@@ -114,9 +114,6 @@ void add_keywords(hashtable *ht){
     insert_entry(ht,"module",MODULE);
     insert_entry(ht,"driver",DRIVER);
     insert_entry(ht,"program",PROGRAM);
-    insert_entry(ht,"record",RECORD);
-    insert_entry(ht,"tagged",TAGGED);
-    insert_entry(ht,"union",UNION);
     insert_entry(ht,"get_value",GET_VALUE);
     insert_entry(ht,"print",PRINT);
     insert_entry(ht,"use",USE);
@@ -170,7 +167,6 @@ const char* convert(TOKEN sym){
         case ID: return "ID" ; break;
         case NUM: return "NUM" ; break;
         case RNUM: return "RNUM" ; break;
-        case ERROR: return "ERROR" ; break;
         case INTEGER: return "INTEGER" ; break;
         case REAL: return "REAL" ; break;
         case BOOLEAN: return "BOOLEAN" ; break;
@@ -182,9 +178,6 @@ const char* convert(TOKEN sym){
         case MODULE: return "MODULE" ; break;
         case DRIVER: return "DRIVER" ; break;
         case PROGRAM: return "PROGRAM" ; break;
-        case RECORD: return "RECORD" ; break;
-        case TAGGED: return "TAGGED" ; break;
-        case UNION: return "UNION" ; break;
         case GET_VALUE: return "GET_VALUE" ; break;
         case PRINT: return "PRINT" ; break;
         case USE: return "USE" ; break;
