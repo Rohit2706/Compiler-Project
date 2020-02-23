@@ -4,7 +4,7 @@
 #include "mappingTable.h"
 
 #define GRAMMAR_SIZE 104
-#define NT_SIZE 57
+#define NT_SIZE 56
 hashtable* ht;
 typedef struct Node{
     Symbol data;
@@ -17,6 +17,8 @@ typedef struct LinkedList{
     node* head;
     node* tail;
 }linkedList;
+
+linkedList* grammar[GRAMMAR_SIZE];
 
 linkedList* createLinkedList(){
     linkedList* lhsNode=(linkedList* )malloc(sizeof(linkedList));
@@ -220,7 +222,7 @@ const char* convert2(Symbol sym, int tag){
         default: return "UNRECOGNIZED TOKEN"; break;
     }
 }
-int first[NT_SIZE] = {0};
+unsigned long int first[NT_SIZE] = {0};
 
 typedef struct Rule_node{
 	int rule;
@@ -233,26 +235,26 @@ typedef struct{
 }Rule;
 
 Rule map[NT_SIZE];
-/*
-int calculateFirst(NON_TERMINAL nt){
+
+unsigned long int calculateFirst(NON_TERMINAL nt){
   	if(first[nt])
     	return first[nt];
 
-	Rule_node* curr = map[nt]->head;
+	Rule_node* curr = map[nt].head;
 	while(curr!=NULL){
-    node* symbol_node = Grammar[curr->rule]->head->next ; //Symbol is union of NT and T
-    int val = 0;
-    while(symbol_node!=NULL) //Add isTerminal
+    node* symbol_node = grammar[curr->rule]->head->next ; //Symbol is union of NT and T
+    unsigned long val = 0;
+    while(symbol_node!=NULL) 
     {
-			if(isTerminal(s)){
-      	first[nt] = first[nt] | locate(symbol_node->symbol);
+			if(symbol_node->tag==1){
+      	first[nt] = first[nt] | (1lu<<(symbol_node->data).t_val);
         break;
       }
     	else{
-        val = calculateFirst(symbol_node->symbol);
+        val = calculateFirst((symbol_node->data).nt_val);
       	first[nt] = first[nt] | ((val&1)?(val-1):val);
       }
-      if(first[symbol_node->symbol]&1){
+      if(first[(symbol_node->data).nt_val]&1){
       	symbol_node = symbol_node->next;
       }
       else
@@ -267,9 +269,20 @@ int calculateFirst(NON_TERMINAL nt){
   
   return first[nt];
 }
-*/
 
-
+void convertfirst(int i){
+	unsigned long int val = first[i];
+	int pos = 0;
+	Symbol s;
+	while(val){
+		if(val&1){
+			s.t_val = (TOKEN)pos;
+			printf("%s, ",convert2(s,1));
+		}
+		val >>=1;
+		pos++;
+	}
+}
 int main(){
 	ht = hashtable_create(HASH_SIZE);
 	add_terminals(ht);   
@@ -282,30 +295,46 @@ int main(){
 	    return 0;
 	}
 
-	linkedList* grammar[GRAMMAR_SIZE];
 	for(int i=0;i<GRAMMAR_SIZE;i++){
 	    grammar[i] = createLinkedList();
 	}
 
   readIntoArr(grammarFile, grammar);
-  /*
+  
+  for(int i=0;i<NT_SIZE;i++){
+  	map[i].head=NULL;
+  	map[i].tail=NULL;
+  }
+
   for(int i=0;i<GRAMMAR_SIZE;i++){
-		NON_TERMINAL index = arr[i]->head->data;
-		if(map[index]->head==NULL){
-			map[index]->head = malloc(sizeof(Rule_node));
-			map[index]->head->rule = i;
-			map[index]->head->next = NULL;
-			map[index]->tail = map[index]->head;
+		NON_TERMINAL index = (grammar[i]->head->data).nt_val;
+		if(map[index].head==NULL){
+			map[index].head = malloc(sizeof(Rule_node));
+			map[index].head->rule = i;
+			map[index].head->next = NULL;
+			map[index].tail = map[index].head;
 		}
 		else{
-			map[index]->tail->next = malloc(sizeof(Rule_node));
-			map[index]->tail = map[index]->tail->next;
-			map[index]->tail->rule = i;
-			map[index]->tail->next = NULL;
+			map[index].tail->next = malloc(sizeof(Rule_node));
+			map[index].tail = map[index].tail->next;
+			map[index].tail->rule = i;
+			map[index].tail->next = NULL;
 		}
+	}
+
+	// For printing 
+	/*for(int i=0;i<NT_SIZE;i++){
+		Rule_node* curr = map[i].head;
+		printf("NT=%d ",i+1);
+		while(curr!=NULL){
+			printf("%d, ",curr->rule + 1);
+			curr = curr->next;
+		}
+		printf("\n");
 	}*/
 
-  FILE* fp = fopen("testGrammar.txt","w");
+		// For printing stored grammar
+  /*FILE* fp = fopen("testGrammar.txt","w");
   for(int i=0;i<GRAMMAR_SIZE;i++){
         node* curr = grammar[i]->head;
         fprintf(fp,"%s ", convert2(curr->data,curr->tag));
@@ -316,11 +345,21 @@ int main(){
         }
 
         fprintf(fp,"\n");
-    }
+    }*/
    
-  NON_TERMINAL nt = PROGRAM_NT;
-  //calculateFirst(nt);
+ for(int i=0;i<NT_SIZE;i++)
+ 	calculateFirst((NON_TERMINAL)i);
+ Symbol s;
+ printf("\n\n");
+  for(int i=0;i<NT_SIZE;i++){
+  	s.nt_val = (NON_TERMINAL)i;
+  	printf("NT= %-25s\t First= {",convert2(s,2));
+  	convertfirst(i);
+  	printf("}\n");
+  }
 
+  printf("\n\n");
+  //malloc
 	for(int i=0;i<HASH_SIZE;i++)
       free(ht->table[i]);
   free(ht->table);
