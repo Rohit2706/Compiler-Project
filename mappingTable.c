@@ -5,7 +5,7 @@
 // Function Definations
 
 // 1. To create hash table
-hashtable* hashtable_create(int size){
+hashtable* hashtable_create2(int size){
 
     hashtable *newtable = (hashtable *)malloc(sizeof(hashtable));
     newtable->table = (Datapair **)malloc(sizeof(Datapair*) * size);
@@ -26,7 +26,7 @@ hashtable* hashtable_create(int size){
 // [bit(c1) bit(c2) bit(c3)] % (size of hash table)
 // where bit(c) is the bit representation of the ASCII value of c
 
-int hash_func(hashtable *ht, char* key ){
+int hash_func2(hashtable *ht, char* key ){
 
     int hashvalue=0,i=0;
 
@@ -63,7 +63,7 @@ Datapair* create_pair_nonterminal(char* key, NON_TERMINAL val){
 void insert_entry_terminal(hashtable *ht, char* key, TOKEN val){
 
     
-    int hashval =hash_func(ht,key);
+    int hashval =hash_func2(ht,key);
 
     Datapair *end=NULL;
     Datapair *next = ht->table[hashval];
@@ -91,7 +91,7 @@ void insert_entry_terminal(hashtable *ht, char* key, TOKEN val){
 void insert_entry_nonterminal(hashtable *ht, char* key, NON_TERMINAL val){
 
     
-    int hashval =hash_func(ht,key);
+    int hashval =hash_func2(ht,key);
 
     Datapair *end=NULL;
     Datapair *next = ht->table[hashval];
@@ -117,10 +117,10 @@ void insert_entry_nonterminal(hashtable *ht, char* key, NON_TERMINAL val){
 }
 
 // 5. To get the value given a key
-tagged_union get_value(hashtable *ht,char* key){
+tagged_union get_value2(hashtable *ht,char* key){
 
     Datapair* pair = NULL;
-    int hashvalue =hash_func(ht,key);
+    int hashvalue =hash_func2(ht,key);
 
     pair = ht->table[hashvalue];
     while(pair!=NULL && pair->key !=NULL && strcmp(key,pair->key) > 0){
@@ -248,7 +248,7 @@ void add_nonterminals(hashtable *ht){
      insert_entry_nonterminal(ht,"conditionalStmt",CONDITIONALSTMT);
      insert_entry_nonterminal(ht,"caseStmt",CASESTMT);
      insert_entry_nonterminal(ht,"caseStmt_1",CASESTMT_1);
-     insert_entry_nonterminal(ht,"value",VALUE);
+     insert_entry_nonterminal(ht,"value",VALUE_NT);
      insert_entry_nonterminal(ht,"default",DEFAULT_NT);
      insert_entry_nonterminal(ht,"iterativeStmt",ITERATIVESTMT);
      insert_entry_nonterminal(ht,"range_arrays",RANGE_ARRAYS);
@@ -335,18 +335,18 @@ const char* convert(tagged_union sym){
 /*
 int main(){
 
-    hashtable *ht = hashtable_create(HASH_SIZE);
+    hashtable *ht = hashtable_create2(HASH_SIZE);
     add_terminals(ht);   
     add_nonterminals(ht);
     // Some Test Cases (Note that it will print ID for the keys that are not keywords)
     printf("\n");
-    printf("Input: INTEGER  \tTOKEN: %s\n",convert(get_value(ht,"INTEGER")));
-    printf("Input: range    \tTOKEN: %s\n",convert(get_value(ht,"range")));
-    printf("Input: SWITCH   \tTOKEN: %s\n",convert(get_value(ht,"SWITCH")));
-    printf("Input: FOR      \tTOKEN: %s\n",convert(get_value(ht,"FOR")));
-    printf("Input: PROGRAM  \tTOKEN: %s\n",convert(get_value(ht,"PROGRAM")));
-    printf("Input: program  \tTOKEN: %s\n",convert(get_value(ht,"program")));
-    printf("Input: term_1   \tTOKEN: %s\n",convert(get_value(ht,"term_1")));
+    printf("Input: INTEGER  \tTOKEN: %s\n",convert(get_value2(ht,"INTEGER")));
+    printf("Input: range    \tTOKEN: %s\n",convert(get_value2(ht,"range")));
+    printf("Input: SWITCH   \tTOKEN: %s\n",convert(get_value2(ht,"SWITCH")));
+    printf("Input: FOR      \tTOKEN: %s\n",convert(get_value2(ht,"FOR")));
+    printf("Input: PROGRAM  \tTOKEN: %s\n",convert(get_value2(ht,"PROGRAM")));
+    printf("Input: program  \tTOKEN: %s\n",convert(get_value2(ht,"program")));
+    printf("Input: term_1   \tTOKEN: %s\n",convert(get_value2(ht,"term_1")));
     printf("\n");
 
     // Free memory

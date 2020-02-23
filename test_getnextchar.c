@@ -14,7 +14,7 @@ int line_count = 1;
 int *flag;
 hashtable *ht;
 char *buffer1, *buffer2;
-
+const char* convert(TOKEN sym);
 void getStream(char* buffer){
 	int size = fread(buffer, sizeof(char), buffer_size, file);
 	if(size!=buffer_size)
@@ -112,6 +112,14 @@ TokenInfo tokenGen(TokenInfo newToken, TOKEN token_name){
       (newToken.value).rnum_value = atof(newToken.lexeme);
       newToken.tag = 2;
     }
+
+    printf("Token:%s\t\tLexeme:%-15sLine:%d\t",convert(newToken.token),newToken.lexeme,newToken.line_no);
+    if(newToken.tag==1)
+      printf("Value: %d\n",newToken.value.num_value);
+    else if(newToken.tag==2)
+       printf("Value: %f\n",newToken.value.rnum_value);
+     else
+       printf("Value: None\n");
 
     return newToken;
 }
@@ -468,7 +476,7 @@ TokenInfo getNextToken(){
 }
 void driver(){
   file = NULL;
-  file = fopen("t1.txt","r");
+  file = fopen("t3.txt","r");
   if(file==NULL){
     printf("FILE NOT FOUND\n");
     return;
@@ -496,7 +504,7 @@ void enddriver(){
   free(buffer2);
   free(flag);
 }
-
+/*
 int main(){
   driver();
   if(file==NULL)
@@ -513,7 +521,7 @@ int main(){
     else if(mytoken.tag==2)
        printf("Value: %f\n",mytoken.value.rnum_value);
      else
-       printf("Value: None\n");*/
+       printf("Value: None\n");
   }
 
   printf("\n");
@@ -521,7 +529,7 @@ int main(){
   enddriver();
   return 0;
 }
-
+*/
 const char* convert(TOKEN sym){
     switch(sym)
     {

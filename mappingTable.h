@@ -8,6 +8,7 @@
 
 
 #ifndef tokens
+#define tokens
 typedef enum{EPSILON, DOLLAR,INTEGER,REAL,BOOLEAN,OF,ARRAY,START,END,DECLARE,MODULE,DRIVER,PROGRAM,GET_VALUE,PRINT,USE,
              WITH,PARAMETERS,TRUE,FALSE,TAKES,INPUT,RETURNS,AND,OR,FOR,IN,SWITCH,CASE,BREAK,DEFAULT,WHILE,
              PLUS, MINUS, MUL, DIV, LT, LE, GE, GT, EQ, NE, DRIVERDEF, DRIVERENDDEF, DEF, ENDDEF, COLON, RANGEOP, 
@@ -16,12 +17,13 @@ typedef enum{EPSILON, DOLLAR,INTEGER,REAL,BOOLEAN,OF,ARRAY,START,END,DECLARE,MOD
 #endif
 
 #ifndef non_terminal
+#define non_terminal
 typedef enum{PROGRAM_NT,MODULEDECLARATIONS,MODULEDECLARATION,OTHERMODULES,DRIVERMODULE,MODULE_NT,RET,INPUT_PLIST,
              INPUT_PLIST_1,OUTPUT_PLIST,OUTPUT_PLIST_1,DATATYPE,TYPE,MODULEDEF,STATEMENTS,STATEMENT,IOSTMT,VAR,
              VAR_ID_NUM,BOOLCONSTT,WHICHID,SIMPLESTMT,ASSIGNMENTSTMT,WHICHSTMT,LVALUEIDSTMT,LVALUEARRSTMT,INDEX,
              MODULEREUSESTMT,OPTIONAL,IDLIST,IDLIST_1,EXPRESSION,U,U_1,ARMORBOOL,N7,ANYTERM,N8,ARITHMETICEXPR,
              ARITHMETICEXPR_1,TERM,TERM_1,FACTOR,OP1,OP2,LOGICALOP,RELATIONALOP,DECLARESTMT,CONDITIONALSTMT,CASESTMT,
-             CASESTMT_1,VALUE,DEFAULT_NT,ITERATIVESTMT,RANGE_ARRAYS,RANGE} NON_TERMINAL;
+             CASESTMT_1,VALUE_NT,DEFAULT_NT,ITERATIVESTMT,RANGE_ARRAYS,RANGE} NON_TERMINAL;
 #endif
 
 // Symbol represents each symbol in the grammar rule and is either a terminal(token) or a non-termianl
@@ -51,13 +53,13 @@ typedef struct{
 }tagged_union;
 
 // Function prototypes
-hashtable* hashtable_create(int size);
-int hash_func(hashtable *ht, char* key );
+hashtable* hashtable_create2(int size);
+int hash_func2(hashtable *ht, char* key );
 Datapair* create_pair_terminal(char* key, TOKEN val);
 Datapair* create_pair_nonterminal(char* key, NON_TERMINAL val);
 void insert_entry_terminal(hashtable *ht, char* key, TOKEN val);
 void insert_entry_nonterminal(hashtable *ht, char* key, NON_TERMINAL val);
-tagged_union get_value(hashtable *ht,char* key);
+tagged_union get_value2(hashtable *ht,char* key);
 void add_terminals(hashtable *ht);
 void add_nonterminals(hashtable *ht);
 const char* convert(tagged_union sym);

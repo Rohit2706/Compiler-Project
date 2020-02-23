@@ -6,10 +6,10 @@
 // TOKEN is an enum variable for possible tokens in the ERPLAG language
 #ifndef tokens
 #define tokens
-typedef enum{INTEGER,REAL,BOOLEAN,OF,ARRAY,START,END,DECLARE,MODULE,DRIVER,PROGRAM,GET_VALUE,PRINT,USE,
-			 WITH,PARAMETERS,TRUE,FALSE,TAKES,INPUT,RETURNS,AND,OR,FOR,IN,SWITCH,CASE,BREAK,DEFAULT,WHILE,
+typedef enum{EPSILON, DOLLAR,INTEGER,REAL,BOOLEAN,OF,ARRAY,START,END,DECLARE,MODULE,DRIVER,PROGRAM,GET_VALUE,PRINT,USE,
+             WITH,PARAMETERS,TRUE,FALSE,TAKES,INPUT,RETURNS,AND,OR,FOR,IN,SWITCH,CASE,BREAK,DEFAULT,WHILE,
              PLUS, MINUS, MUL, DIV, LT, LE, GE, GT, EQ, NE, DRIVERDEF, DRIVERENDDEF, DEF, ENDDEF, COLON, RANGEOP, 
-             SEMICOL, COMMA, ASSIGNOP, SQBO, SQBC, BO, BC, ID, NUM, RNUM, EPSILON, DOLLAR
+             SEMICOL, COMMA, ASSIGNOP, SQBO, SQBC, BO, BC, ID, NUM, RNUM
              } TOKEN;
              
 #endif
@@ -38,4 +38,6 @@ TokenInfo failure(TokenInfo newToken, char ch);
 char getNextChar(char* lexeme, int* length);
 void retract(char* lexeme, int* length);
 TOKEN search_keyword(char* lexeme, int* length);
-const char* convert(TOKEN sym);
+void enddriver();
+void driver();
+//const char* convert(TOKEN sym);

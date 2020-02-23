@@ -1,8 +1,9 @@
 #include<stdio.h>
 #include<string.h>
 #include<stdlib.h>
+#include<math.h>
 #include "mappingTable.h"
-#include "lexer.h"
+
 #define GRAMMAR_SIZE 104
 #define NT_SIZE 56
 #define TOKEN_SIZE 58
@@ -67,7 +68,7 @@ void readIntoArr(FILE* grammarRules, linkedList* grammar[]){
                 for(int i=beg;i<end;i++){
                     insert[i-beg]=line[i];    
                 }
-                tagged_union T = get_value2(ht,insert);
+                tagged_union T = get_value(ht,insert);
                 if(flag==0){
                     addLhs(grammar[currRow], T.value,T.tag);
                     flag=1;
@@ -153,7 +154,7 @@ const char* convert2(Symbol sym, int tag){
         case CONDITIONALSTMT: return "conditionalstmt" ; break;
         case CASESTMT: return "casestmt" ; break;
         case CASESTMT_1: return "casestmt_1" ; break;
-        case VALUE_NT: return "value" ; break;
+        case VALUE: return "value" ; break;
         case DEFAULT_NT: return "default" ; break;
         case ITERATIVESTMT: return "iterativestmt" ; break;
         case RANGE_ARRAYS: return "range_arrays" ; break;
@@ -383,291 +384,123 @@ unsigned long int calculateFollow(NON_TERMINAL nt){
   return follow[nt];
 }
 
-int parseTable[NT_SIZE][TOKEN_SIZE];
-
-void createParseTable(){
-	for(int i=0;i<NT_SIZE;i++){
-		for(int j=0;j<TOKEN_SIZE;j++)
-			parseTable[i][j] = -1;
-	}
-	for(int i=0;i<GRAMMAR_SIZE;i++){
-		node* temp = grammar[i]->head;
-
-		NON_TERMINAL nt = (temp->data).nt_val;
-		temp = temp->next;
-
-		while(temp!=NULL){
-			if(temp->tag==1){
-				if((temp->data).t_val == EPSILON)
-					temp = NULL;
-				else
-					parseTable[nt][(temp->data).t_val] = i;
-				break;
-			}
-			else{
-				int pos=1;
-				unsigned long int val = first[(temp->data).nt_val];
-				
-				val>>=1;
-				while(val){
-					if(val&1){
-						parseTable[nt][pos] = i;
-					}
-					val >>= 1;
-					pos++;
-				}
-
-				if(first[(temp->data).nt_val]&1)
-					temp = temp->next;
-				else
-					break;
-			}
-		}
-
-		if(temp==NULL){
-			unsigned long int val = follow[nt];
-			int pos=1;
-			val >>= 1;
-			while(val){
-				if(val&1){
-					parseTable[nt][pos] = i;
-				}
-				val >>= 1;
-				pos++;
-			}
-		}
-	}
-
-	for(int i=0;i<NT_SIZE;i++){
-		unsigned long int val = follow[i];
-			int pos=1;
-			val>>=1;
-			while(val){
-				if(val&1 && parseTable[i][pos]==-1){
-					parseTable[i][pos]=-2;
-				}
-				val >>= 1;
-				pos++;
-			}
-	}
-}
-
-#define STACK_CAPACITY 150
-
-typedef struct tree_node{
-
-    tagged_union val;
-    int no_child;
-    struct tree_node ** child;
-
-}tree_node;
-
-typedef struct Stack{
-
-    int pos;
-    int capacity;
-    tree_node * vals[STACK_CAPACITY];
-
-}stack;
-
-stack* makeStack(){
-    stack* res=(stack*)malloc(sizeof(stack));
-    res->capacity=STACK_CAPACITY;
-    res->pos=-1;
-    return res;
-}
-
-void push(stack* inpStack, tree_node* pushnode){
+// int isKthBitSet(unsigned long int n, int k) 
+// { 
+//     if (n & (1lu << k)) 
+//         return 1; 
     
-    if(inpStack->pos<inpStack->capacity){
-        inpStack->pos++;
-        inpStack->vals[inpStack->pos]=pushnode;
-    }
-    else
-        return;
-    
-}
+//     return 0; 
+// } 
 
-int size(stack* inpStack){
-    return inpStack->pos+1;
-}
+// int parseTable[NT_SIZE][TOKEN_SIZE];
 
-tree_node* top(stack* inpStack){
-    return (tree_node*)inpStack->vals[inpStack->pos];
-}
+// for(int i=0;i<NT_SIZE;i++){
+//     for(int j=0;j<TOKEN_SIZE;j++){
+//         parseTable[i][j]=-1;
+//     }
+// }
 
-tree_node* pop(stack* inpStack){
-    if(inpStack->pos==-1){
-        return NULL;
-    }
-    
-    else{
-        inpStack->pos--;
-        return (tree_node*)inpStack->vals[inpStack->pos+1];
-    }
-    
-}
+// void makeParseTable(){
+//     for(int i=0;i<GRAMMAR_SIZE;i++){
+//         node* temp=grammar[i]->head;
+//         NON_TERMINAL term=(temp->data).nt_val;
+//         temp=temp->next;
 
-tree_node* makenode(tagged_union inputtag){
-    tree_node* newnode = (tree_node*) malloc(sizeof(tree_node));
-    newnode->val=inputtag;
-    newnode->child=NULL;
-    newnode->no_child=0;
-    return newnode;
-}
-
-tree_node* addsinglenode( tree_node* head, tagged_union newtag){
-
-    tree_node* newnode = makenode(newtag);
-
-    head->child = realloc(head->child, (head->no_child+1)*(sizeof(node *)) );
-    head->child[head->no_child] = newnode; 
-    head->no_child++;
-
-    return newnode;
-}
-
- 
-tree_node* createParseTree(){
-
-    // Initialising every variable for the Parse tree
-    TOKEN term;
-    tagged_union  stackval;               
-    stack* st = makeStack();
-    stackval.tag = 1; stackval.value.nt_val =  DOLLAR;    
-    tree_node* dollarStack=makenode(stackval);
-    push(st,dollarStack);
-    stackval.tag = 2; stackval.value.nt_val =  PROGRAM_NT;    
-    tree_node* Root = makenode(stackval); 
-    push(st,Root);
-    int rule_no;
-    // End of initializing
+//         while(temp!=NULL)
+//     }
+// }
 
 
-    TokenInfo tokeninfo = getNextToken();
-    term = tokeninfo.token; 
 
-    do{      
-    	Symbol s2;
-    	s2.t_val = term;
-    	// printf("fsafd %s\n",convert2(s2,1)); 
-        stackval = top(st)->val;
-        tree_node* head = top(st);
+int ParseTable[NT_SIZE][TOKEN_SIZE]; // NT vs T , declare constants
 
-        if(stackval.tag==1 && stackval.value.t_val == term ){
-            
-            pop(st);
-            if(term == DOLLAR)
-                {break;}
-            tokeninfo = getNextToken();
-            term = tokeninfo.token;
+
+//  ASSUMPTIONS
+// 1. arrLinkedList is the global grammar
+// 2. FIRST is the integer array with the encoded firsts of indexes
+// 3. FOLLOW ""
+// 4. ParseTable is global variable
+
+
+void populate_row(int val, NON_TERMINAL nt, int rule_no,int pop){
+
+    int top=0;
+    while((1<<top) < val) top++;
+
+    while(top--){
+        if((1<<top) <= pop){
+            pop = pop - (1<<top);
+            ParseTable[nt][top] = rule_no;
         }
-        else if (stackval.tag==1 && stackval.value.t_val != term ){
-            
-            // HANDLE PANIC MODE ERROR
-        	tokeninfo = getNextToken();
-            term=tokeninfo.token;
-        }
-        else {
+    }
+}
 
-            rule_no = parseTable[stackval.value.nt_val][term];
+int is_epsilon_present(unsigned long int num){
+    return ((num&1)?1:0);
+}
 
-            if(rule_no==-1){         
-                // HANDLE PANIC MODE ERROR
-            	tokeninfo = getNextToken();
-            	term=tokeninfo.token;
-            	
+void populate_parse_table(){
+
+    for(int i = 0;i<NT_SIZE;i++)
+        for(int j=0;j<TOKEN_SIZE;j++)
+            ParseTable[i][j]=-1;
+
+    for(int i=0;i<GRAMMAR_SIZE;i++){
+
+        // printf("Rule noumber %d \n",i);
+        node* temp = grammar[i]->head->next;
+        int pop=0;
+
+        while(temp){
+
+            if(temp->tag==1){
+                pop= pop | (1<<(temp->data).t_val);
+                break;
             }
-            else if(rule_no==-2){
-            	pop(st);
-            	if(term == DOLLAR)
-                	break;
-	            tokeninfo = getNextToken();
-	            term = tokeninfo.token;
-            }
+
+            pop = pop|first[(temp->data).t_val];
+
+            if(! is_epsilon_present(first[(temp->data).t_val]))
+                break;
             else{
-
-                node* temp = grammar[rule_no]->head->next;
-                while(temp){
-                	tagged_union t;
-                	t.value = temp->data;
-                	t.tag = temp->tag;
-                    addsinglenode(head,t);
+                if(temp->next==NULL)
+                    pop = pop|follow[(grammar[i]->head->data).nt_val];
+                else
                     temp = temp->next;
-                }
-
-                pop(st);
-                for(int i= head->no_child-1;i>=0;i--){
-                    push(st,head->child[i]);
-                }
-
-
+                
             }
 
-
         }
-        
-    }while(term!=DOLLAR);
 
-    return Root;
+        populate_row(pop,(grammar[i]->head->data).nt_val,i,pop);
+
+    }
+
+    for(int j=0;j<7;j++){
+            Symbol s;
+            s.t_val  = (TOKEN)j;
+            printf("%-15s ",convert2(s,1));
+    }
+    printf("\n");
+    for(int i=0;i<10;i++){
+        for(int j=0;j<7;j++)
+            printf("%-15d ",ParseTable[i][j]);
+        printf("\n");;
+    }
+    
 }
 
 
 
-
-
-
-void printParseTree(tree_node* temp){
-
-	if(temp==NULL)
-		return;
-	if(temp->no_child==0){
-		printf("%s\n", convert2( (temp->val).value,1));
-		return;
-	}
-	printParseTree(temp->child[0]);
-	Symbol s;
-	s = (temp->val).value;
-	if((temp->val).tag==1){
-		printf("%s\n", convert2(s,1));
-	}
-	else{
-		printf("%s\n", convert2(s,2));
-	}
-	for(int i=1;i<temp->no_child;i++)
-		printParseTree(temp->child[i]);
-	printf("\n");
-
-}
-
-
-
-
-
-
-
+  //malloc
+//     for(int i=0;i<HASH_SIZE;i++)
+//       free(ht->table[i]);
+//   free(ht->table);
+//   free(ht);
+// }
 
 int main(){
-
-	driver();
-    TokenInfo mytoken;
-
-  printf("\n");
-/*
-  while((mytoken = getNextToken()).token!= DOLLAR){
-    printf("Token:%s\t\tLexeme:%-15sLine:%d\t",convert(mytoken.token),mytoken.lexeme,mytoken.line_no);
-    if(mytoken.tag==1)
-      printf("Value: %d\n",mytoken.value.num_value);
-    else if(mytoken.tag==2)
-       printf("Value: %f\n",mytoken.value.rnum_value);
-     else
-       printf("Value: None\n");
-  }
-
-  printf("\n");*/
-
-
-	ht = hashtable_create2(HASH_SIZE);
+	ht = hashtable_create(HASH_SIZE);
 	add_terminals(ht);   
     add_nonterminals(ht);
 
@@ -765,46 +598,6 @@ int main(){
 
   printf("\n\n");
   */
-  createParseTable();
+    populate_parse_table();
 
-  tree_node* Root=createParseTree();
-  //printParseTree(Root);
-
-
-  /*
-  for(int j=0;j<7;j++){
-            Symbol s;
-            s.t_val  = (TOKEN)j;
-            printf("%-15s ",convert2(s,1));
-    }
-    printf("\n");
-    for(int i=0;i<10;i++){
-        for(int j=0;j<7;j++)
-            printf("%-15d ",parseTable[i][j]);
-        printf("\n");;
-    }
-	*/
-  /*
-  for(int i=0;i<NT_SIZE;i++){
-  	Symbol s;
-  	s.nt_val = (NON_TERMINAL)i;
-  	printf("%s------------------\n",convert2(s,2));
-        for(int j=0;j<TOKEN_SIZE;j++){
-        	s.t_val  = (TOKEN)j;
-        	if(parseTable[i][j]==-1)
-        		continue;
-        	if(parseTable[i][j]==-2){
-        		printf("%s: syn\n",convert2(s,1));
-        	}
-        	else
-            	printf("%s: %d\n",convert2(s,1),parseTable[i][j]+1);
-        }
-        printf("\n\n");;
-    }*/
-  //malloc
-    enddriver();
-	for(int i=0;i<HASH_SIZE;i++)
-      free(ht->table[i]);
-  free(ht->table);
-  free(ht);
 }
