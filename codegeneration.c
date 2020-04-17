@@ -166,6 +166,8 @@ void generateAssembly(tree_node* ast, FILE* fp){
           fprintf(fp,"    mov cx, 2\n");
           fprintf(fp,"    mul cx\n");
         }
+        
+        fprintf(fp,"    and rax, 0fh\n"); 
         fprintf(fp,"    sub r8, rax\n"); 
         fprintf(fp,"    mov ax, word[r8]\n");
         fprintf(fp,"    push rax\n");
@@ -659,12 +661,36 @@ void generateAssembly(tree_node* ast, FILE* fp){
     case DECLARESTMT: return; break;
     case ASSIGNMENTSTMT:  
         generateAssembly(ast->child[ast->no_child-1], fp);
-        fprintf(fp,"    pop rax\n");
+        
         
         find = returnIfPresentST(ast->child[0]->lexeme, curr_st,ast->child[0]);
+        if((find->type).isArray){
+            generateAssembly(ast->child[1], fp);  
+            fprintf(fp,"    mov r8, rbp\n");    
+            fprintf(fp,"    sub r8, %d\n",find->offset+8);          
+            fprintf(fp,"    pop rax\n");  // do bound checking
+            fprintf(fp,"    sub rax, %d\n",(find->type).begin);
+            fprintf(fp,"    add rax, 1\n");
+            if((find->type).dtype == INTEGER){
+              fprintf(fp,"    mov cx, 2\n");
+              fprintf(fp,"    mul cx\n");
+            }
+            
+            fprintf(fp,"    and rax, 0fh\n"); 
+            fprintf(fp,"    sub r8, rax\n"); 
+            fprintf(fp,"    pop rax\n");
+
+            if((find->type).dtype == INTEGER)
+              fprintf(fp,"    mov word[r8], ax\n");
+            else 
+              fprintf(fp,"    mov byte[r8], al\n");
+            fprintf(fp,"\n");
+            return; break;
+        }
 
         fprintf(fp,"    mov rbx, rbp\n");
-        fprintf(fp,"    sub rbx, %d\n",find->offset+find->width);           // include [] in lexeme
+        fprintf(fp,"    sub rbx, %d\n",find->offset+find->width);           
+        fprintf(fp,"    pop rax\n");
         if((find->type).dtype == INTEGER)
           fprintf(fp,"    mov word[rbx], ax\n");
         else 
