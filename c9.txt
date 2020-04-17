@@ -22,8 +22,6 @@ start
 				print(y);
                         	break;
 			case 2: 
-				print(z);
-				print(x);
 				z:= x*3-z+loop_var;
 				print(z);
                         	break;
@@ -32,7 +30,6 @@ start
 		end
 		print(y);
 		print(z);
-		print(loop_var);
 	end
 end
 

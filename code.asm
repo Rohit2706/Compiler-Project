@@ -36,39 +36,6 @@ driver:
     sub rsp, 16
     push rbp
 
-    mov rax, 19
-    push rax
-    pop rax
-    mov rbx, rbp
-    sub rbx, 4
-    mov word[rbx], ax
-
-    mov rax, 56
-    push rax
-    pop rax
-    mov rbx, rbp
-    sub rbx, 6
-    mov word[rbx], ax
-
-    mov rax, 6
-    push rax
-    mov rax, 3
-    push rax
-    mov rbx, rbp
-    sub rbx, 9
-    push rbx
-
-    pop rdi
-    pop rax
-    mov word[rdi], ax
-    push rdi
-loopStart1:
-    pop rax
-    pop rbx
-    cmp word[rax], bx
-    jg loopEnd1
-    push rbx
-    push rax
     mov rdi, formatstring
     mov rsi, inputi
     xor rax, rax
@@ -84,6 +51,20 @@ loopStart1:
     sub rsi, 2
     mov rax, 0
     call scanf
+
+    mov rax, 19
+    push rax
+    pop rax
+    mov rbx, rbp
+    sub rbx, 4
+    mov word[rbx], ax
+
+    mov rax, 56
+    push rax
+    pop rax
+    mov rbx, rbp
+    sub rbx, 6
+    mov word[rbx], ax
 
 switch1:
     mov ax, word[rbp - 2]
@@ -107,13 +88,6 @@ switch1:
 
     mov ax, word[rbp - 4]
     push rax
-    mov ax, word[rbp - 9]
-    push rax
-    pop rbx
-    pop rax
-    add ax, bx
-    push rax
-
     pop rbx
     pop rax
     sub ax, bx
@@ -148,38 +122,6 @@ switch1:
     pop rax
     cmp r10w, ax
     jne .case3
-    mov rdi, formatstring
-    mov rsi, output
-    xor rax, rax
-    call printf
-
-    mov rdi, printint
-    xor rsi, rsi
-    mov si, word[rbp-6]
-    mov rax, 0
-    call printf
-
-    mov rdi, formatstring
-    mov rsi, newline
-    xor rax, rax
-    call printf
-
-    mov rdi, formatstring
-    mov rsi, output
-    xor rax, rax
-    call printf
-
-    mov rdi, printint
-    xor rsi, rsi
-    mov si, word[rbp-2]
-    mov rax, 0
-    call printf
-
-    mov rdi, formatstring
-    mov rsi, newline
-    xor rax, rax
-    call printf
-
     mov ax, word[rbp - 2]
     push rax
     mov rax, 3
@@ -191,13 +133,6 @@ switch1:
 
     mov ax, word[rbp - 6]
     push rax
-    mov ax, word[rbp - 9]
-    push rax
-    pop rbx
-    pop rax
-    add ax, bx
-    push rax
-
     pop rbx
     pop rax
     sub ax, bx
@@ -276,27 +211,6 @@ switch1:
     xor rax, rax
     call printf
 
-    mov rdi, formatstring
-    mov rsi, output
-    xor rax, rax
-    call printf
-
-    mov rdi, printint
-    xor rsi, rsi
-    mov si, word[rbp-9]
-    mov rax, 0
-    call printf
-
-    mov rdi, formatstring
-    mov rsi, newline
-    xor rax, rax
-    call printf
-
-    pop rax
-    add word[rax],1
-    push rax
-    jmp loopStart1
-loopEnd1:
     pop rsp
     pop rbp
     ret

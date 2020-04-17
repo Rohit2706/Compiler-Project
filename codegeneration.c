@@ -3,8 +3,34 @@ int label = 1;
 SYMBOL_TABLE* curr_st, *save_st;
 int locallabel=1;
 int switchlabel=1;
+
+int sameprec(tree_node* ast, tree_node* child){
+    TOKEN t1 = (ast->val).value.t_val;
+    TOKEN t2 = (child->val).value.t_val;
+
+    if(t1 == t2)
+        return 1;
+    if((t1 == PLUS && t2 == MINUS) || (t2 == PLUS && t1 == MINUS))
+        return 1;
+    if((t1 == MUL && t2 == DIV) || (t2 == MUL && t1 == DIV))
+        return 1;
+    if((t1 == AND && t2 == OR) || (t2 == AND && t1 == OR))
+        return 1;
+
+    return 0;
+}
+int checkassoc(tree_node* ast, FILE* fp){
+    if(!sameprec(ast,ast->child[0])){
+        generateAssembly(ast->child[0],fp);
+        return 0;
+    }
+    generateAssembly(ast->child[0]->childLeft[0],fp);
+    (ast->child[0]->childLeft[0]->val).value.t_val = EPSILON;
+    return 1;
+}
 void generateAssembly(tree_node* ast, FILE* fp){
   STValue* find, *find2;
+  int flag;
   if((ast->val).tag==1){
     tree_node* iterator,* rangeStart,* rangeEnd, *index;
     char* buffer = malloc(sizeof(char)*100);
@@ -118,12 +144,14 @@ void generateAssembly(tree_node* ast, FILE* fp){
 
       case PLUS:
         generateAssembly(ast->childLeft[0],fp);    
-        generateAssembly(ast->child[0],fp);
+        flag = checkassoc(ast,fp);
         fprintf(fp,"    pop rbx\n");
         fprintf(fp,"    pop rax\n");
         fprintf(fp,"    add ax, bx\n");
         fprintf(fp,"    push rax\n");
         fprintf(fp,"\n");
+        if(flag == 1)
+            generateAssembly(ast->child[0],fp);
         return; break;
                 
       case ARRAY:
@@ -145,33 +173,39 @@ void generateAssembly(tree_node* ast, FILE* fp){
                 
       case MINUS:
         generateAssembly(ast->childLeft[0],fp);    
-        generateAssembly(ast->child[0],fp);
+        flag = checkassoc(ast,fp);
         fprintf(fp,"    pop rbx\n");
         fprintf(fp,"    pop rax\n");
         fprintf(fp,"    sub ax, bx\n");
         fprintf(fp,"    push rax\n");
         fprintf(fp,"\n");
+        if(flag == 1)
+            generateAssembly(ast->child[0],fp);
         return; break;
                 
       case DIV: 
         generateAssembly(ast->childLeft[0],fp);    
-        generateAssembly(ast->child[0],fp);
+        flag = checkassoc(ast,fp);
         fprintf(fp,"    pop rbx\n");
         fprintf(fp,"    pop rax\n");
         fprintf(fp,"    div bx\n");
         fprintf(fp,"    and ax, 0fh\n");       
         fprintf(fp,"    push rax\n");
         fprintf(fp,"\n");
+        if(flag == 1)
+            generateAssembly(ast->child[0],fp);
         return; break;
                 
       case MUL: 
         generateAssembly(ast->childLeft[0],fp);    
-        generateAssembly(ast->child[0],fp);
+        flag = checkassoc(ast,fp);
         fprintf(fp,"    pop rbx\n");
         fprintf(fp,"    pop rax\n");
         fprintf(fp,"    imul bx\n");     
         fprintf(fp,"    push rax\n");
         fprintf(fp,"\n");
+        if(flag == 1)
+            generateAssembly(ast->child[0],fp);
         return; break;
           
       case LT: 
@@ -266,22 +300,26 @@ void generateAssembly(tree_node* ast, FILE* fp){
           
       case AND: 
         generateAssembly(ast->childLeft[0],fp);    
-        generateAssembly(ast->child[0],fp);
+        flag = checkassoc(ast,fp);
         fprintf(fp,"    pop rbx\n");
         fprintf(fp,"    pop rax\n");
         fprintf(fp,"    and ax, bx\n");
         fprintf(fp,"    push rax\n");
         fprintf(fp,"\n");
+        if(flag == 1)
+            generateAssembly(ast->child[0],fp);
         return; break;
       
       case OR: 
         generateAssembly(ast->childLeft[0],fp);    
-        generateAssembly(ast->child[0],fp);
+        flag = checkassoc(ast,fp);
         fprintf(fp,"    pop rbx\n");
         fprintf(fp,"    pop rax\n");
         fprintf(fp,"    or ax, bx\n");
         fprintf(fp,"    push rax\n");
         fprintf(fp,"\n");
+        if(flag == 1)
+            generateAssembly(ast->child[0],fp);
         return; break;
 
       default: return;

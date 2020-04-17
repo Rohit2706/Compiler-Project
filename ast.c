@@ -509,13 +509,14 @@ void printSymbol(STEntry* inp, char* moduleName, int level, int outputEnd){
     STValue* inpValue = inp->value;
     if(inp->value==NULL)
     	return;
+    int offset;
     if(inpValue->offset < outputEnd){
         level = 0;
-        inpValue->offset += inpoffset;
+        offset = inpValue->offset + inpoffset;
     }
 
     else{
-        inpValue->offset -= outputEnd;
+        offset = inpValue->offset - outputEnd;
     }
     FILE* fp;
     fp = stdout;
@@ -527,23 +528,19 @@ void printSymbol(STEntry* inp, char* moduleName, int level, int outputEnd){
     	
         if(inpType.isStatic == 1){
             fprintf(fp,"%-5d  %-7s  %-20s  [%-4d-%4d]\t", inpValue->width, "yes", "Static Array", (inpType.begin), (inpType.end));
-            fprintf(fp,"%-10s  %-6d  %-3d", convert_token_lexer(inpType.dtype), inpValue->offset, level);
+            fprintf(fp,"%-10s  %-6d  %-3d", convert_token_lexer(inpType.dtype), offset, level);
         }
         else if(inpType.isStatic == 0){
             fprintf(fp,"%-5d  %-7s  %-20s  [%-4s-%4s]\t", inpValue->width, "yes", "Dynamic Array", inpType.begins, inpType.ends);
-            fprintf(fp,"%-10s  %-6d  %-3d", convert_token_lexer(inpType.dtype), inpValue->offset, level);
+            fprintf(fp,"%-10s  %-6d  %-3d", convert_token_lexer(inpType.dtype), offset, level);
         }
     }
 
     else{
         fprintf(fp,"%-5d  %-7s  %-20s  %-11s\t", inpValue->width , "no ", "---", "---");
-        fprintf(fp,"%-10s  %-6d  %-3d", convert_token_lexer(inpType.dtype), inpValue->offset, level);
+        fprintf(fp,"%-10s  %-6d  %-3d", convert_token_lexer(inpType.dtype), offset, level);
     }
     fprintf(fp,"\n");
-
-    if(level == 0 && inpValue->offset> inpoffset){
-        inpValue->offset -= inpoffset;
-    }
 }
 
 void printActivationRecord(){
@@ -636,12 +633,14 @@ void printarraysymbol(STEntry* inp, char* moduleName, int level, int outputEnd){
     STValue* inpValue = inp->value;
     if(inp->value==NULL)
     	return;
+    int offset;
     if(inpValue->offset < outputEnd){
         level = 0;
+        offset = inpoffset + inpValue->offset;
     }
 
     else{
-        inpValue->offset -= outputEnd;
+        offset = inpValue->offset - outputEnd;
     }
     FILE* fp;
     fp = stdout;
@@ -652,11 +651,11 @@ void printarraysymbol(STEntry* inp, char* moduleName, int level, int outputEnd){
     	fprintf(fp,"%-20s  %-20s  %-4d-%4d  ", inp->key, moduleName, (inpValue->scope)[0], (inpValue->scope)[1]);
         if(inpType.isStatic == 1){
             fprintf(fp,"%-5d  %-7s  %-20s  [%-4d-%4d]\t", inpValue->width + 1, "yes", "Static Array", (inpType.begin), (inpType.end));
-            fprintf(fp,"%-10s  %-6d  %-3d", convert_token_lexer(inpType.dtype), inpValue->offset, level);
+            fprintf(fp,"%-10s  %-6d  %-3d", convert_token_lexer(inpType.dtype), offset, level);
         }
         else if(inpType.isStatic == 0){
             fprintf(fp,"%-5d  %-7s  %-20s  [%-4s-%4s]\t", inpValue->width + 1, "yes", "Dynamic Array", inpType.begins, inpType.ends);
-            fprintf(fp,"%-10s  %-6d  %-3d", convert_token_lexer(inpType.dtype), inpValue->offset, level);
+            fprintf(fp,"%-10s  %-6d  %-3d", convert_token_lexer(inpType.dtype), offset, level);
         }
         fprintf(fp,"\n");
     }
