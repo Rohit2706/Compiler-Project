@@ -1,7 +1,8 @@
 #include "ast.h"
 int label = 1;
-SYMBOL_TABLE* curr_st;
+SYMBOL_TABLE* curr_st, *save_st;
 int locallabel=1;
+int switchlabel=1;
 void generateAssembly(tree_node* ast, FILE* fp){
   STValue* find, *find2;
   if((ast->val).tag==1){
@@ -9,32 +10,35 @@ void generateAssembly(tree_node* ast, FILE* fp){
     char* buffer = malloc(sizeof(char)*100);
     switch((ast->val).value.t_val){
       case SWITCH:  
-        // curr_st = ast->stptr;
-        // fprintf(fp, "switch%d:\n",label);
-        // generateAssembly(ast->child[0], fp);
-        // fprintf(fp, "    POP EX\n");
-        // fprintf(fp, "\n");
-        // for(int i=0;i<ast->child[1]->no_child;i+=2){
-        //   fprintf(fp, ".case%d:\n",i/2+1);
-        //   generateAssembly(ast->child[1]->child[i],fp);
-        //   fprintf(fp, "    POP AX\n");
-        //   fprintf(fp, "    cmp EX, AX\n");
-        //   fprintf(fp, "    JNE .case%d",i/2+2);
-        //   fprintf(fp, "\n");
-        //   generateAssembly(ast->child[1]->child[i+1],fp);
-        //   fprintf(fp, "    JMP .endswitch\n");
-        //   fprintf(fp, "\n");
-        // }
-        // fprintf(fp, ".case%d:\n",ast->child[1]->no_child/2 +1);
-        // if((ast->child[2]->child[0]->val).value.t_val == EPSILON);
-        // else
-        //   generateAssembly(ast->child[2]->child[0],fp);
+        save_st = curr_st;
+        curr_st = ast->stptr;
+        fprintf(fp, "switch%d:\n",switchlabel);
+        generateAssembly(ast->child[0], fp);
+        fprintf(fp, "    pop r10\n");
+        fprintf(fp, "\n");
+        for(int i=0;i<ast->child[1]->no_child;i+=2){
+          fprintf(fp, ".case%d:\n",i/2+1);
+          generateAssembly(ast->child[1]->child[i],fp);
+          fprintf(fp, "    pop rax\n");
+          fprintf(fp, "    cmp r10w, ax\n");
+          fprintf(fp, "    jne .case%d",i/2+2);
+          fprintf(fp, "\n");
+          generateAssembly(ast->child[1]->child[i+1],fp);
+          fprintf(fp, "    jmp .endswitch\n");
+          fprintf(fp, "\n");
+        }
+        fprintf(fp, ".case%d:\n",ast->child[1]->no_child/2 +1);
+        if((ast->child[2]->child[0]->val).value.t_val == EPSILON);
+        else
+          generateAssembly(ast->child[2]->child[0],fp);
 
-        // fprintf(fp, ".endswitch:\n");
-        // label++;
+        fprintf(fp, ".endswitch:\n");
+        switchlabel++;
+        curr_st = save_st;
         return;  break;
 
       case FOR: 
+        save_st = curr_st;
         curr_st = ast->stptr;
         iterator = ast->child[0];
         rangeStart = ast->child[1]->child[0];
@@ -68,7 +72,8 @@ void generateAssembly(tree_node* ast, FILE* fp){
         fprintf(fp,"    jmp loopStart%d\n",label);
         fprintf(fp,"loopEnd%d:\n",label);
         label++;
-    
+        
+        curr_st = save_st;
         return; break;
       
       case WHILE:
@@ -124,8 +129,8 @@ void generateAssembly(tree_node* ast, FILE* fp){
       case ARRAY:
         generateAssembly(ast->child[1],fp);    
         find = returnIfPresentST(ast->child[0]->lexeme, curr_st, ast->child[0]);
-        fprintf(fp,"    mov rbx, rbp\n");    
-        fprintf(fp,"    sub rbx, %d\n",find->offset+8);          
+        fprintf(fp,"    mov r8, rbp\n");    
+        fprintf(fp,"    sub r8, %d\n",find->offset+8);          
         fprintf(fp,"    pop rax\n");  // do bound checking
         fprintf(fp,"    sub rax, %d\n",(find->type).begin);
         fprintf(fp,"    add rax, 1\n");
@@ -133,8 +138,8 @@ void generateAssembly(tree_node* ast, FILE* fp){
           fprintf(fp,"    mov cx, 2\n");
           fprintf(fp,"    mul cx\n");
         }
-        fprintf(fp,"    sub rbx, rax\n"); 
-        fprintf(fp,"    mov ax, word[rbx]\n");
+        fprintf(fp,"    sub r8, rax\n"); 
+        fprintf(fp,"    mov ax, word[r8]\n");
         fprintf(fp,"    push rax\n");
         return; break;
                 
@@ -289,8 +294,8 @@ void generateAssembly(tree_node* ast, FILE* fp){
         fprintf(fp, "SECTION .data\n");
         fprintf(fp, "inputi  db \"Input: Enter an integer value\",00h\n");
         fprintf(fp, "inputb  db \"Input: Enter a boolean value\",00h\n");
-        fprintf(fp, "output db \"Output:\",00h\n");
-        fprintf(fp, "formatstring db \"%%s\"\n");
+        fprintf(fp, "output db \"Output: \",00h\n");
+        fprintf(fp, "formatstring db \"%%s\",00h\n");
         fprintf(fp, "newline db 0Ah,00h\n");
         fprintf(fp, "space db \" \",00h\n");
         fprintf(fp, "formatint db \"%%hi\",00h\n");
@@ -301,7 +306,7 @@ void generateAssembly(tree_node* ast, FILE* fp){
         fprintf(fp, "range1 dw 0\n");
         fprintf(fp, "range2 dw 0\n");
         fprintf(fp, "base dq 0\n");
-        fprintf(fp, "formatarray db \"Input: Enter %%hi elements of %%s type for range %%hi to %%hi \",0Ah,00h \n");
+        fprintf(fp, "formatarray db \"Input: Enter %%hi elements of %%s type for range %%hi to %%hi \",00h \n");
         fprintf(fp, "INTEGER db \"integer\",00h\n");
         fprintf(fp, "BOOLEAN db \"boolean\",00h\n");
         fprintf(fp, "booltemp dw 0\n");
@@ -326,7 +331,8 @@ void generateAssembly(tree_node* ast, FILE* fp){
         return; break;                                                  //done
 
     // MODULE DECS
-    case DRIVERMODULE:                                                    //done
+    case DRIVERMODULE:        
+        save_st = curr_st;                                            //done
         curr_st = ast->stptr;
         fprintf(fp, "driver:\n");
         fprintf(fp, "    push rbp\n");
@@ -339,6 +345,8 @@ void generateAssembly(tree_node* ast, FILE* fp){
         fprintf(fp, "    pop rbp\n");
         fprintf(fp, "    ret\n");
         fprintf(fp, "\n");
+
+        curr_st = save_st;
         return; break;
 
     case MODULE_NT:
@@ -397,6 +405,12 @@ void generateAssembly(tree_node* ast, FILE* fp){
             fprintf(fp, "    call printf\n");
             fprintf(fp, "\n");
 
+            fprintf(fp, "    mov rdi, formatstring\n");
+            fprintf(fp, "    mov rsi, newline\n");
+            fprintf(fp, "    xor rax, rax\n");
+            fprintf(fp, "    call printf\n");
+            fprintf(fp, "\n");
+
             fprintf(fp, "    mov r15w, word[range1]\n");
             fprintf(fp, "    loopStart%d:\n",label);
             fprintf(fp, "    cmp r15w, word[range2]\n");
@@ -450,6 +464,12 @@ void generateAssembly(tree_node* ast, FILE* fp){
             fprintf(fp, "    call printf\n");
             fprintf(fp, "\n");
 
+            fprintf(fp, "    mov rdi, formatstring\n");
+            fprintf(fp, "    mov rsi, newline\n");
+            fprintf(fp, "    xor rax, rax\n");
+            fprintf(fp, "    call printf\n");
+            fprintf(fp, "\n");
+
             fprintf(fp, "    mov rdi, formatint\n");
             fprintf(fp, "    mov rsi, rbp\n");
             fprintf(fp, "    sub rsi, %d\n", find->offset+find->width);
@@ -461,6 +481,12 @@ void generateAssembly(tree_node* ast, FILE* fp){
 
             fprintf(fp, "    mov rdi, formatstring\n");
             fprintf(fp, "    mov rsi, inputb\n");
+            fprintf(fp, "    xor rax, rax\n");
+            fprintf(fp, "    call printf\n");
+            fprintf(fp, "\n");
+
+            fprintf(fp, "    mov rdi, formatstring\n");
+            fprintf(fp, "    mov rsi, newline\n");
             fprintf(fp, "    xor rax, rax\n");
             fprintf(fp, "    call printf\n");
             fprintf(fp, "\n");
@@ -548,17 +574,17 @@ void generateAssembly(tree_node* ast, FILE* fp){
             
             }
 
-            fprintf(fp, "    mov rdi, formatstring\n");
-            fprintf(fp, "    mov rsi, space   \n");
-            fprintf(fp, "    xor rax, rax\n");
-            fprintf(fp, "    call printf\n");
-            fprintf(fp, "\n");
-
             fprintf(fp, "    inc r15w\n");
             fprintf(fp, "    jmp loopStart%d\n",label);
             fprintf(fp, "    loopEnd%d:\n",label);
             fprintf(fp, "\n");
             label++;
+
+            fprintf(fp, "    mov rdi, formatstring\n");
+            fprintf(fp, "    mov rsi, newline\n");
+            fprintf(fp, "    xor rax, rax\n");
+            fprintf(fp, "    call printf\n");
+            fprintf(fp, "\n");
 
             return; break;
           }
@@ -586,7 +612,7 @@ void generateAssembly(tree_node* ast, FILE* fp){
             label++;
           }
           fprintf(fp, "    mov rdi, formatstring\n");
-          fprintf(fp, "    mov rsi, newline   \n");
+          fprintf(fp, "    mov rsi, newline\n");
           fprintf(fp, "    xor rax, rax\n");
           fprintf(fp, "    call printf\n");
           fprintf(fp, "\n");

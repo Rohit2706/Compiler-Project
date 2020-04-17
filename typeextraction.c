@@ -420,7 +420,8 @@ void extractType(tree_node* root, SYMBOL_TABLE* curr_st){
               printf("Line %d: semantic error - invalid index type for array\n",root->child[0]->line_no);
               return;         
             }
-            if((root->child[0]->type).isStatic == 1 && outOfRange((root->child[1]->value).num_value,(root->child[0]->type).begin,(root->child[0]->type).end)==-1){
+            if((root->child[0]->type).isStatic == 1 && (root->child[1]->val).value.t_val == NUM && 
+              outOfRange((root->child[1]->value).num_value,(root->child[0]->type).begin,(root->child[0]->type).end)==-1){
                 if(error_flag)
                 printf("Line %d: semantic error - array index out of bounds\n",root->child[0]->line_no);
             }
