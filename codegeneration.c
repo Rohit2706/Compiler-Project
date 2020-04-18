@@ -420,6 +420,11 @@ void generateAssembly(tree_node* ast, FILE* fp){
         fprintf(fp, "\n");
         generateAssembly(ast->child[0]->child[0], fp);
         fprintf(fp, "    pop rax\n");
+        fprintf(fp, "    mov rax, 60\n");
+        fprintf(fp, "    xor rdi, rdi\n");
+        fprintf(fp, "    syscall\n");
+        fprintf(fp, "\n");
+        
         fprintf(fp, "    add rsp, %d\n", ((curr_st->curr_offset/16)+1)*16);
         fprintf(fp, "    pop rbp\n");
         fprintf(fp, "    ret\n");
