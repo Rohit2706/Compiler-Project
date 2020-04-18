@@ -1,5 +1,5 @@
 output: ast.o mappingTable.o lexer.o Hash_table.o stack.c arrayOfLinkedList.c parser.o FunctionTable.o SymbolTable.o stpopulate.o typeextraction.o codegeneration.o driver.o
-	gcc -g -o stage1exe ast.o stack.c arrayOfLinkedList.c parser.o mappingTable.o lexer.o Hash_table.o FunctionTable.o SymbolTable.o stpopulate.o typeextraction.o codegeneration.o driver.o
+	gcc -g -o compiler ast.o stack.c arrayOfLinkedList.c parser.o mappingTable.o lexer.o Hash_table.o FunctionTable.o SymbolTable.o stpopulate.o typeextraction.o codegeneration.o driver.o
 driver.o: driver.c
 	gcc -c -g driver.c -I. 
 codegeneration.o: codegeneration.c
@@ -25,4 +25,4 @@ Hash_table.o : Hash_table.c
 clean:
 	rm *.o
 	rm *.h.gch
-	rm stage1exe
+	rm compiler

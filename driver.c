@@ -44,13 +44,13 @@ int main(int args, char* argv[])
                     break;
             case 4: ast_driver(argv[1],0,0,1,0,0,0,0,NULL);
                     break;
-            case 5: ast_driver(argv[1],0,1,0,1,0,0,0,NULL);
+            case 5: ast_driver(argv[1],0,0,0,1,0,0,0,NULL);
                     break;
 
-            case 6: ast_driver(argv[1],0,1,0,0,1,0,0,NULL);
+            case 6: ast_driver(argv[1],0,0,0,0,1,0,0,NULL);
                     break;
 
-            case 7: ast_driver(argv[1],0,1,0,0,0,1,0,NULL);
+            case 7: ast_driver(argv[1],0,0,0,0,0,1,0,NULL);
                     break;
 
             case 8: start_time = clock();

@@ -1,3 +1,10 @@
+//Group No. 7
+//ANIRUDH GOYAL 2017A7PS0031P
+//ANISHKUMAR SS 2017A7PS0069P
+//ROHIT JAIN 2017A7PS0122P
+//ADITYA SAXENA 2017A7PS0166P
+
+
 #include "ast.h"
 int label = 1;
 SYMBOL_TABLE* curr_st, *save_st;
@@ -107,17 +114,18 @@ void generateAssembly(tree_node* ast, FILE* fp){
         return; break;
       
       case WHILE:
-        // curr_st = ast->stptr;
-        // fprintf(fp,"loopStart%d:\n", label);
-        // generateAssembly(ast->child[0], fp);
-        // fprintf(fp,"    POP AX\n");
-        // fprintf(fp,"    MOV BX,00\n"); 
-        // fprintf(fp,"    CMP AX,BX\n");
-        // fprintf(fp,"    jz loopEnd%d\n",label);    
-        // generateAssembly(ast->child[1], fp);
-        // fprintf(fp,"    jmp loopStart%d\n",label);
-        // fprintf(fp,"loopEnd%d:\n",label);
-        // label++;
+        save_st = curr_st;
+        curr_st = ast->stptr;
+        fprintf(fp,"loopStart%d:\n", label);
+        generateAssembly(ast->child[0], fp);
+        fprintf(fp,"    pop rax\n");
+        fprintf(fp,"    cmp al,0\n");
+        fprintf(fp,"    je loopEnd%d\n",label);    
+        generateAssembly(ast->child[1], fp);
+        fprintf(fp,"    jmp loopStart%d\n",label);
+        fprintf(fp,"loopEnd%d:\n",label);
+        label++;
+        curr_st = save_st;
         return; break;
 
       case NUM:

@@ -1,14 +1,15 @@
+//Group No. 7
+//ANIRUDH GOYAL 2017A7PS0031P
+//ANISHKUMAR SS 2017A7PS0069P
+//ROHIT JAIN 2017A7PS0122P
+//ADITYA SAXENA 2017A7PS0166P
+
 // This file implements data structures needed for the lexical analyser(lexer.c)
 
 #define HASH_SIZE 33
 #define INT_MAX 2147483647
 
 // TOKEN is an enum variable for possible tokens in the ERPLAG language
-//Group No. 7
-//ANIRUDH GOYAL 2017A7PS0031P
-//ANISHKUMAR SS 2017A7PS0069P
-//ROHIT JAIN 2017A7PS0122P
-//ADITYA SAXENA 2017A7PS0166P
 
 #ifndef tokens
 #define tokens

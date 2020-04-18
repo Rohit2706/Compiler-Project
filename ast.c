@@ -1,3 +1,8 @@
+//Group No. 7
+//ANIRUDH GOYAL 2017A7PS0031P
+//ANISHKUMAR SS 2017A7PS0069P
+//ROHIT JAIN 2017A7PS0122P
+//ADITYA SAXENA 2017A7PS0166P
 
 #include "ast.h"
 int inpoffset = 0;
@@ -465,9 +470,11 @@ void printSymbolTable(){
     for(int i=0;i<size;i++){
         currFunc = ft->table[i];
         
-        while(currFunc!=NULL){
+        while(currFunc!=NULL && currFunc!= (FTEntry*)(0x20)){
             moduleName = currFunc->key;
             currFuncDets = currFunc->value;
+            if(currFuncDets != NULL){
+            	
             int outputEnd = currFuncDets ->outputEnd;
             if(currFuncDets->inputSymbolTable!=NULL){
             	helperSymTable(currFuncDets->inputSymbolTable, moduleName, 0, 0);
@@ -476,6 +483,7 @@ void printSymbolTable(){
             else
             	inpoffset = 0;
             helperSymTable(currFuncDets->localSymbolTable, moduleName, 1, outputEnd);
+        }
             currFunc = currFunc->next;
         }
         
@@ -560,14 +568,16 @@ void printActivationRecord(){
     for(int i=0;i<size;i++){
         currFunc = ft->table[i];
         
-        while(currFunc!=NULL){
+        while(currFunc!=NULL && currFunc!= (FTEntry*)(0x20)){
             moduleName = currFunc->key;
             currFuncDets = currFunc->value;
+            if(currFuncDets != NULL){
             int recordSize = currFuncDets->localSymbolTable->curr_offset;
             if(currFuncDets->inputSymbolTable!=NULL)
             	recordSize += currFuncDets->inputSymbolTable->curr_offset;
-            currFunc = currFunc->next;
             printf("%-20s\t\t%d\n",moduleName, recordSize);
+        }
+            currFunc = currFunc->next;
         }
         
     }
@@ -593,13 +603,15 @@ void printArray(){
     for(int i=0;i<size;i++){
         currFunc = ft->table[i];
         
-        while(currFunc!=NULL){
+        while(currFunc!=NULL && currFunc!= (FTEntry*)(0x20)){
             moduleName = currFunc->key;
             currFuncDets = currFunc->value;
+            if(currFuncDets != NULL){
             int outputEnd = currFuncDets ->outputEnd;
+
             if(currFuncDets->inputSymbolTable!=NULL)
             	helperarray(currFuncDets->inputSymbolTable, moduleName, 0, 0);
-            helperarray(currFuncDets->localSymbolTable, moduleName, 1, outputEnd);
+            helperarray(currFuncDets->localSymbolTable, moduleName, 1, outputEnd);}
             currFunc = currFunc->next;
         }
         
