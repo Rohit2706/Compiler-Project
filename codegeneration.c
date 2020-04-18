@@ -411,7 +411,8 @@ void generateAssembly(tree_node* ast, FILE* fp){
         fprintf(fp, "    push rbp\n");
         fprintf(fp, "\n");
         generateAssembly(ast->child[0]->child[0], fp);
-        fprintf(fp, "    pop rsp\n");
+        fprintf(fp, "    pop rax\n");
+        fprintf(fp, "    add rsp, %d\n", ((curr_st->curr_offset/16)+1)*16);
         fprintf(fp, "    pop rbp\n");
         fprintf(fp, "    ret\n");
         fprintf(fp, "\n");
@@ -512,13 +513,16 @@ void generateAssembly(tree_node* ast, FILE* fp){
         }
 
         fprintf(fp, "\n");
+        fprintf(fp, "    mov r13, rbp\n");
         fprintf(fp, "    call %s\n",ast->child[ast->no_child-2]->lexeme);
+        fprintf(fp, "    mov rbp, r13\n");
         fprintf(fp, "\n");
 
-        child = ast->child[0]->child[0];
+        child = ast->child[0];
         if((child->child[0]->val).value.t_val == EPSILON);
         else{
-            for(int i=0;i<child->no_child;i++){
+            child = child->child[0];
+            for(int i=child->no_child-1;i>=0;i--){
                 find = returnIfPresentST(child->child[i]->lexeme, curr_st,child->child[i]);
                 fprintf(fp, "    pop rax\n");
                 if((find->type).dtype == INTEGER){
