@@ -3,7 +3,6 @@ int label = 1;
 SYMBOL_TABLE* curr_st, *save_st;
 int locallabel=1;
 int switchlabel=1;
-
 int sameprec(tree_node* ast, tree_node* child){
     TOKEN t1 = (ast->val).value.t_val;
     TOKEN t2 = (child->val).value.t_val;
@@ -159,7 +158,13 @@ void generateAssembly(tree_node* ast, FILE* fp){
         find = returnIfPresentST(ast->child[0]->lexeme, curr_st, ast->child[0]);
         fprintf(fp,"    mov r8, rbp\n");    
         fprintf(fp,"    sub r8, %d\n",find->offset+8);          
-        fprintf(fp,"    pop rax\n");  // do bound checking
+        fprintf(fp,"    pop rax\n");
+        fprintf(fp,"\n");
+        fprintf(fp,"    cmp ax, %d\n",(find->type).begin);
+        fprintf(fp,"    jl outofbounds\n");
+        fprintf(fp,"    cmp ax, %d\n",(find->type).end);
+        fprintf(fp,"    jg outofbounds\n");
+        fprintf(fp,"\n");
         fprintf(fp,"    sub rax, %d\n",(find->type).begin);
         fprintf(fp,"    add rax, 1\n");
         if((find->type).dtype == INTEGER){
@@ -171,6 +176,7 @@ void generateAssembly(tree_node* ast, FILE* fp){
         fprintf(fp,"    sub r8, rax\n"); 
         fprintf(fp,"    mov ax, word[r8]\n");
         fprintf(fp,"    push rax\n");
+        fprintf(fp,"\n");
         return; break;
                 
       case MINUS:
@@ -350,6 +356,8 @@ void generateAssembly(tree_node* ast, FILE* fp){
         fprintf(fp, "INTEGER db \"integer\",00h\n");
         fprintf(fp, "BOOLEAN db \"boolean\",00h\n");
         fprintf(fp, "booltemp dw 0\n");
+        fprintf(fp, "runtimeerror db \"RUN TIME ERROR: Array index out of bounds\",00h\n");
+        fprintf(fp, "darraysize dw 0\n");
         fprintf(fp, "\n");
         fprintf(fp, "SECTION .text\n");
         fprintf(fp, "global main\n");
@@ -357,16 +365,33 @@ void generateAssembly(tree_node* ast, FILE* fp){
         fprintf(fp, "extern scanf\n");   
         fprintf(fp, "\n");   
         fprintf(fp, "main:\n");
-        fprintf(fp, "   call driver\n");
+        fprintf(fp, "    call driver\n");
         fprintf(fp, "\n");
         
-        fprintf(fp, "   mov rax, 60\n");
-        fprintf(fp, "   xor rdi, rdi\n");
-        fprintf(fp, "   syscall\n");
+        fprintf(fp, "    mov rax, 60\n");
+        fprintf(fp, "    xor rdi, rdi\n");
+        fprintf(fp, "    syscall\n");
         fprintf(fp, "\n");
         
         for(int i=0;i<ast->no_child;i++)
           generateAssembly(ast->child[i], fp);
+
+        fprintf(fp, "\n");
+        fprintf(fp, "outofbounds:\n");
+        fprintf(fp, "    mov rdi, formatstring\n");
+        fprintf(fp, "    mov rsi, runtimeerror\n");
+        fprintf(fp, "    xor rax, rax\n");
+        fprintf(fp, "    call printf\n");
+        fprintf(fp, "\n");
+        fprintf(fp, "    mov rdi, formatstring\n");
+        fprintf(fp, "    mov rsi, newline\n");
+        fprintf(fp, "    xor rax, rax\n");
+        fprintf(fp, "    call printf\n");
+        fprintf(fp, "\n");
+        fprintf(fp, "    mov rax, 60\n");
+        fprintf(fp, "    xor rdi, rdi\n");
+        fprintf(fp, "    syscall\n");
+        fprintf(fp, "\n");
 
         return; break;                                                  //done
 
@@ -658,7 +683,48 @@ void generateAssembly(tree_node* ast, FILE* fp){
           fprintf(fp, "\n");
 
         }
-    case DECLARESTMT: return; break;
+
+        return; break;
+    case DECLARESTMT: 
+          if((ast->child[1]->type).isArray  && (ast->child[1]->type).isStatic == 0){
+            generateAssembly(ast->child[1]->child[0], fp);
+            generateAssembly(ast->child[1]->child[1], fp);
+            fprintf(fp, "    pop rax\n");
+            fprintf(fp, "    pop rbx\n");
+            fprintf(fp, "    mov word[range1], ax\n");
+            fprintf(fp, "    mov word[range2], bx\n");
+            fprintf(fp, "    mov word[darraysize], bx\n");
+            fprintf(fp, "    sub word[darraysize], ax\n");
+            fprintf(fp, "    add word[darraysize], 1\n");
+            if((ast->child[1]->type).dtype == INTEGER){
+              fprintf(fp, "    mov ax, word[darraysize]\n");
+              fprintf(fp, "    mov cx, 2\n");
+              fprintf(fp, "    mul cx\n");
+              fprintf(fp, "    mov word[darraysize], ax\n");
+            }
+            fprintf(fp, "    add word[darraysize], 4\n");
+            fprintf(fp, "    mov ax, word[darraysize]\n");
+            fprintf(fp, "    div 16\n");
+            fprintf(fp, "    cmp ah, 0\n");
+            fprintf(fp, "    jne locallabel%d\n",locallabel);
+            fprintf(fp, "    add byte[darraysize], ah\n");
+            fprintf(fp, "    locallabel%d:\n",locallabel);
+            fprintf(fp, "\n");
+            locallabel++;
+            for(int i=0;i<ast->child[0]->no_child;i++){
+              find = returnIfPresentST(ast->child[0]->child[i]->lexeme, curr_st,ast->child[0]->child[i]);
+              fprintf(fp, "    mov qword[rbp-%d], rsp\n",find->offset + 8);
+              fprintf(fp, "    mov rdi, rsp\n");
+              fprintf(fp, "    add sp, word[darraysize]\n");
+              fprintf(fp, "    mov ax, word[range1]\n");
+              fprintf(fp, "    mov word[rdi-2], ax\n");
+              fprintf(fp, "    mov ax, word[range2]\n");
+              fprintf(fp, "    mov word[rdi-4], ax\n");
+              fprintf(fp, "\n");
+            }
+            
+          }
+          return; break;
     case ASSIGNMENTSTMT:  
         generateAssembly(ast->child[ast->no_child-1], fp);
         
@@ -668,7 +734,13 @@ void generateAssembly(tree_node* ast, FILE* fp){
             generateAssembly(ast->child[1], fp);  
             fprintf(fp,"    mov r8, rbp\n");    
             fprintf(fp,"    sub r8, %d\n",find->offset+8);          
-            fprintf(fp,"    pop rax\n");  // do bound checking
+            fprintf(fp,"    pop rax\n");
+            fprintf(fp,"\n");
+            fprintf(fp,"    cmp ax, %d\n",(find->type).begin);
+            fprintf(fp,"    jl outofbounds\n");
+            fprintf(fp,"    cmp ax, %d\n",(find->type).end);
+            fprintf(fp,"    jg outofbounds\n");
+            fprintf(fp,"\n");
             fprintf(fp,"    sub rax, %d\n",(find->type).begin);
             fprintf(fp,"    add rax, 1\n");
             if((find->type).dtype == INTEGER){

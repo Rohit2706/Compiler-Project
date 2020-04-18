@@ -17,6 +17,8 @@ formatarray db "Input: Enter %hi elements of %s type for range %hi to %hi ",00h
 INTEGER db "integer",00h
 BOOLEAN db "boolean",00h
 booltemp dw 0
+runtimeerror db "RUN TIME ERROR: Array index out of bounds",00h
+darraysize dw 0
 
 SECTION .text
 global main
@@ -24,34 +26,20 @@ extern printf
 extern scanf
 
 main:
-   call driver
+    call driver
 
-   mov rax, 60
-   xor rdi, rdi
-   syscall
+    mov rax, 60
+    xor rdi, rdi
+    syscall
 
 driver:
     push rbp
     mov rbp, rsp
-    sub rsp, 64
+    sub rsp, 16
     push rbp
 
-    mov word[range1], 6
-    mov word[range2], 10
-
-    mov qword[base], rbp
-    sub qword[base], 12
-
-    mov rdi, formatarray
-    xor rsi, rsi
-    mov si, word[range2]
-    sub si, word[range1]
-    add si, 1
-    mov rdx, INTEGER
-    xor rcx, rcx
-    xor r8, r8
-    mov cx, word[range1]
-    mov r8w, word[range2]
+    mov rdi, formatstring
+    mov rsi, inputi
     xor rax, rax
     call printf
 
@@ -60,120 +48,51 @@ driver:
     xor rax, rax
     call printf
 
-    mov r15w, word[range1]
-    loopStart1:
-    cmp r15w, word[range2]
-    jg loopEnd1
-
     mov rdi, formatint
-    mov rsi, qword[base]
-    mov rax, 0
-    mov ax, r15w
-    sub ax, word[range1]
-    mov cx, 2
-    mul cx
-    sub rsi, rax
+    mov rsi, rbp
     sub rsi, 2
     mov rax, 0
     call scanf
 
-    inc r15w
-    jmp loopStart1
-    loopEnd1:
-
-    mov word[range1], 6
-    mov word[range2], 10
-
-    mov qword[base], rbp
-    sub qword[base], 30
-
-    mov rdi, formatarray
-    xor rsi, rsi
-    mov si, word[range2]
-    sub si, word[range1]
-    add si, 1
-    mov rdx, INTEGER
-    xor rcx, rcx
-    xor r8, r8
-    mov cx, word[range1]
-    mov r8w, word[range2]
-    xor rax, rax
-    call printf
-
-    mov rdi, formatstring
-    mov rsi, newline
-    xor rax, rax
-    call printf
-
-    mov r15w, word[range1]
-    loopStart2:
-    cmp r15w, word[range2]
-    jg loopEnd2
-
-    mov rdi, formatint
-    mov rsi, qword[base]
-    mov rax, 0
-    mov ax, r15w
-    sub ax, word[range1]
-    mov cx, 2
-    mul cx
-    sub rsi, rax
-    sub rsi, 2
-    mov rax, 0
-    call scanf
-
-    inc r15w
-    jmp loopStart2
-    loopEnd2:
-
-    mov rax, 10
-    push rax
-    mov rax, 6
+    mov rax, 19
     push rax
     mov rbx, rbp
-    sub rbx, 2
-    push rbx
+    sub rbx, 4
+    pop rax
+    mov word[rbx], ax
 
-    pop rdi
-    pop rax
-    mov word[rdi], ax
-    push rdi
-loopStart3:
-    pop rax
-    pop rbx
-    cmp word[rax], bx
-    jg loopEnd3
-    push rbx
+    mov rax, 56
     push rax
+    mov rbx, rbp
+    sub rbx, 6
+    pop rax
+    mov word[rbx], ax
+
+switch1:
     mov ax, word[rbp - 2]
     push rax
-    mov r8, rbp
-    sub r8, 12
-    pop rax
-    sub rax, 6
-    add rax, 1
-    mov cx, 2
-    mul cx
-    and rax, 0fh
-    sub r8, rax
-    mov ax, word[r8]
+    pop r10
+
+.case1:
+    mov rax, 1
     push rax
+    pop rax
+    cmp r10w, ax
+    jne .case2
     mov ax, word[rbp - 2]
     push rax
-    mov r8, rbp
-    sub r8, 30
-    pop rax
-    sub rax, 6
-    add rax, 1
-    mov cx, 2
-    mul cx
-    and rax, 0fh
-    sub r8, rax
-    mov ax, word[r8]
+    mov rax, 2
     push rax
     pop rbx
     pop rax
-    add ax, bx
+    imul bx
+    push rax
+
+    mov ax, word[rbp - 4]
+    push rax
+    pop rbx
+    pop rax
+    sub ax, bx
     push rax
 
     mov rbx, rbp
@@ -197,60 +116,97 @@ loopStart3:
     xor rax, rax
     call printf
 
-    mov ax, word[rbp - 4]
+    jmp .endswitch
+
+.case2:
+    mov rax, 2
     push rax
+    pop rax
+    cmp r10w, ax
+    jne .case3
     mov ax, word[rbp - 2]
     push rax
-    mov r8, rbp
-    sub r8, 48
-    pop rax
-    sub rax, 6
-    add rax, 1
-    mov cx, 2
-    mul cx
-    and rax, 0fh
-    sub r8, rax
-    pop rax
-    mov word[r8], ax
-
-    pop rax
-    add word[rax],1
+    mov rax, 3
     push rax
-    jmp loopStart3
-loopEnd3:
+    pop rbx
+    pop rax
+    imul bx
+    push rax
+
+    mov ax, word[rbp - 6]
+    push rax
+    pop rbx
+    pop rax
+    sub ax, bx
+    push rax
+
+    mov rbx, rbp
+    sub rbx, 6
+    pop rax
+    mov word[rbx], ax
+
     mov rdi, formatstring
     mov rsi, output
     xor rax, rax
     call printf
 
-    mov word[range1], 6
-    mov word[range2], 10
-
-    mov qword[base], rbp
-    sub qword[base], 48
-
-    mov r15w, word[range1]
-    loopStart4:
-    cmp r15w, word[range2]
-    jg loopEnd4
-
     mov rdi, printint
-    mov r8, qword[base]
-    mov rax, 0
-    mov ax, r15w
-    sub ax, word[range1]
-    mov cx, 2
-    mul cx
-    sub r8, rax
-    sub r8, 2
-    mov rax, 0
     xor rsi, rsi
-    mov si, word[r8]
+    mov si, word[rbp-6]
+    mov rax, 0
     call printf
 
-    inc r15w
-    jmp loopStart4
-    loopEnd4:
+    mov rdi, formatstring
+    mov rsi, newline
+    xor rax, rax
+    call printf
+
+    jmp .endswitch
+
+.case3:
+    mov rdi, formatstring
+    mov rsi, output
+    xor rax, rax
+    call printf
+
+    mov rdi, printint
+    xor rsi, rsi
+    mov si, word[rbp-2]
+    mov rax, 0
+    call printf
+
+    mov rdi, formatstring
+    mov rsi, newline
+    xor rax, rax
+    call printf
+
+.endswitch:
+    mov rdi, formatstring
+    mov rsi, output
+    xor rax, rax
+    call printf
+
+    mov rdi, printint
+    xor rsi, rsi
+    mov si, word[rbp-4]
+    mov rax, 0
+    call printf
+
+    mov rdi, formatstring
+    mov rsi, newline
+    xor rax, rax
+    call printf
+
+    mov rdi, formatstring
+    mov rsi, output
+    xor rax, rax
+    call printf
+
+    mov rdi, printint
+    xor rsi, rsi
+    mov si, word[rbp-6]
+    mov rax, 0
+    call printf
 
     mov rdi, formatstring
     mov rsi, newline
@@ -260,4 +216,20 @@ loopEnd3:
     pop rsp
     pop rbp
     ret
+
+
+outofbounds:
+    mov rdi, formatstring
+    mov rsi, runtimeerror
+    xor rax, rax
+    call printf
+
+    mov rdi, formatstring
+    mov rsi, newline
+    xor rax, rax
+    call printf
+
+    mov rax, 60
+    xor rdi, rdi
+    syscall
 

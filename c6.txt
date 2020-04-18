@@ -15,7 +15,7 @@ start
 	start	
 		get_value(m);
 		get_value(n);
-		x:= A[m]+B[n];
+		A[n]:= A[m]+B[m];
 		y:= A[p]+B[n];
 		z:= A[m]+B[p];
 		print(x);

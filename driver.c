@@ -66,6 +66,10 @@ int main(int args, char* argv[])
                 if(fp==NULL)
                     printf("NASM CODE DESTINATION FILE NOT FOUND\n");
                 ast = ast_driver(argv[1],0,1,0,0,0,0,1,fp);
+                printf("\n");
+                printf("Run the following command for code generation using NASM 64-bit:\n\n");
+                printf("\t\t\t\t\tnasm -f elf64 code.asm && gcc -g -no-pie code.o && ./a.out\n\n");
+                printf("\n");
                 generateAssembly(ast,fp);
                 fclose(fp);
                 break;
