@@ -38,6 +38,7 @@ int main(int args, char* argv[])
             case 1: printTokens(argv[1]);
                     break;
             case 2: run_lexer_parser(argv[1],1,1);
+                    parser_enddriver();
                     break;
             case 3: ast_driver(argv[1],1,0,0,0,0,0,0,NULL);
                     break;

@@ -6,7 +6,7 @@ Variant of test case 8
 
 **
 <<module compute_expr>>
-takes input[ a: integer, b:integer, c:boolean];
+takes input[a: integer, b:integer, c:boolean];
 returns [u:integer, v:boolean];
 start
 	declare p, q, d: integer;

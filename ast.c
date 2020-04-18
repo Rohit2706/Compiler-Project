@@ -419,11 +419,13 @@ tree_node* ast_driver(char* filename, int ast_flag, int ef, int compress_flag, i
 		fprintf(fp,"Parent_Symbol       \tisLeafNode");
 		fprintf(fp,"\tCurrent_non_terminal\n\n"); 
 		printAST(ast,t,fp);
+		parser_enddriver();
 		return ast;
 	}
 
 	if(compress_flag){
 		printCompressionRatio(ptcount, astcount);
+		parser_enddriver();
 		return ast;
 	}
 	

@@ -3,6 +3,9 @@ int label = 1;
 SYMBOL_TABLE* curr_st, *save_st;
 int locallabel=1;
 int switchlabel=1;
+tree_node* child;
+FTValue* lookup;
+
 int sameprec(tree_node* ast, tree_node* child){
     TOKEN t1 = (ast->val).value.t_val;
     TOKEN t2 = (child->val).value.t_val;
@@ -30,6 +33,8 @@ int checkassoc(tree_node* ast, FILE* fp){
 void generateAssembly(tree_node* ast, FILE* fp){
   STValue* find, *find2;
   int flag;
+  int tillNow;
+  int stsize;
   if((ast->val).tag==1){
     tree_node* iterator,* rangeStart,* rangeEnd, *index;
     char* buffer = malloc(sizeof(char)*100);
@@ -415,6 +420,45 @@ void generateAssembly(tree_node* ast, FILE* fp){
         return; break;
 
     case MODULE_NT:
+
+        save_st = curr_st;                                            //done
+        curr_st = ast->stptr;
+        fprintf(fp, "%s:\n", ast->child[0]->lexeme);
+        child = ast->child[1];
+        if((child->child[0]->val).value.t_val == EPSILON);
+        else{
+            for(int i=0;i<child->no_child;i+=2){
+                find = returnIfPresentST(child->child[i]->lexeme, curr_st,child->child[i]);
+                find->offset *= -1;
+                find->offset -= 24;
+                find->offset -= find->width;
+            }
+        }
+        fprintf(fp, "    push rbp\n");
+        fprintf(fp, "    push rbp\n");
+        fprintf(fp, "    mov rbp, rsp\n");
+        fprintf(fp, "    sub rsp, %d\n", ((curr_st->curr_offset/16)+1)*16);
+        fprintf(fp, "    push rbp\n");
+        fprintf(fp, "\n");
+        generateAssembly(ast->child[3]->child[0], fp);
+        fprintf(fp, "    pop rsp\n");
+        fprintf(fp, "    pop rbp\n");
+        fprintf(fp, "    pop rax\n");
+        fprintf(fp, "    pop rax\n");
+        child = ast->child[2];
+        if((child->child[0]->val).value.t_val == EPSILON);
+        else{
+            for(int i=0;i<child->no_child;i+=2){
+                find = returnIfPresentST(child->child[i]->lexeme, curr_st,child->child[i]);
+                fprintf(fp, "    push qword[rbp-%d]\n",find->offset + find->width);
+            }
+        }
+        fprintf(fp, "    push rax\n");
+        fprintf(fp, "    ret\n");
+        fprintf(fp, "\n");
+
+        curr_st = save_st;
+        return; break;
         // curr_st = ast->stptr;
         // fprintf(fp, "%s:\n",ast->child[0]->lexeme);
         // //input, output list
@@ -429,8 +473,78 @@ void generateAssembly(tree_node* ast, FILE* fp){
       generateAssembly(ast->child[0],fp);
       break;
 
-    case MODULEDECLARATIONS:
-    case MODULEREUSESTMT: return; break;
+    case MODULEDECLARATIONS:return; break;
+    case MODULEREUSESTMT: 
+        child = ast->child[ast->no_child-1];
+        stsize = 0;
+        if((child->child[0]->val).value.t_val == EPSILON);
+        else{
+            lookup = get_ftvalue(ft, ast->child[ast->no_child-2]->lexeme);
+            stsize = lookup->inputSymbolTable->curr_offset;
+            fprintf(fp, "    xor rbx, rbx\n");
+            fprintf(fp, "    mov bx, %d\n",stsize);
+            fprintf(fp, "    mov al, %d\n",stsize);
+            fprintf(fp, "    mov cl, 16\n");
+            fprintf(fp, "    div cl\n");
+            fprintf(fp, "    cmp ah, 0\n");
+            fprintf(fp, "    je locallabel%d\n",locallabel);
+            fprintf(fp, "    add bl, 16\n");
+            fprintf(fp, "    sub bl, ah\n");
+            fprintf(fp, "    locallabel%d:\n",locallabel);
+            fprintf(fp, "\n");
+            locallabel++;
+            fprintf(fp, "    add rsp, rbx\n");
+            fprintf(fp, "\n");
+            tillNow = 0;
+            for(int i=0;i<child->no_child;i++){
+                find = returnIfPresentST(child->child[i]->lexeme, curr_st,child->child[i]);
+                if((find->type).dtype == INTEGER){
+                    fprintf(fp, "    mov ax, word[rbp - %d]\n", find->offset+find->width);
+                    fprintf(fp, "    mov word[rsp + %d], ax\n",tillNow);
+                    tillNow += find->width;
+                }
+                else{
+                    fprintf(fp, "    mov al, byte[rbp - %d]\n", find->offset+find->width);
+                    fprintf(fp, "    mov byte[rsp + %d], al\n",tillNow);
+                    tillNow += find->width;
+                }
+            }
+        }
+
+        fprintf(fp, "\n");
+        fprintf(fp, "    call %s\n",ast->child[ast->no_child-2]->lexeme);
+        fprintf(fp, "\n");
+
+        child = ast->child[0]->child[0];
+        if((child->child[0]->val).value.t_val == EPSILON);
+        else{
+            for(int i=0;i<child->no_child;i++){
+                find = returnIfPresentST(child->child[i]->lexeme, curr_st,child->child[i]);
+                fprintf(fp, "    pop rax\n");
+                if((find->type).dtype == INTEGER){
+                    fprintf(fp, "    mov word[rbp - %d], ax\n", find->offset+find->width);
+                }
+                else{
+                    fprintf(fp, "    mov byte[rbp - %d], al\n", find->offset+find->width);
+                }
+            }
+        }
+        fprintf(fp, "    xor rbx, rbx\n");
+        fprintf(fp, "    mov bx, %d\n",stsize);
+        fprintf(fp, "    mov al, %d\n",stsize);
+        fprintf(fp, "    mov cl, 16\n");
+        fprintf(fp, "    div cl\n");
+        fprintf(fp, "    cmp ah, 0\n");
+        fprintf(fp, "    je locallabel%d\n",locallabel);
+        fprintf(fp, "    add bl, 16\n");
+        fprintf(fp, "    sub bl, ah\n");
+        fprintf(fp, "    locallabel%d:\n",locallabel);
+        fprintf(fp, "\n");
+        locallabel++;
+        fprintf(fp, "    sub rsp, rbx\n");
+        fprintf(fp, "\n");
+
+        return; break;
     case IOSTMT:
         if((ast->child[0]->val).value.t_val == GET_VALUE){
 
@@ -706,8 +820,9 @@ void generateAssembly(tree_node* ast, FILE* fp){
             fprintf(fp, "    mov ax, word[darraysize]\n");
             fprintf(fp, "    div 16\n");
             fprintf(fp, "    cmp ah, 0\n");
-            fprintf(fp, "    jne locallabel%d\n",locallabel);
-            fprintf(fp, "    add byte[darraysize], ah\n");
+            fprintf(fp, "    je locallabel%d\n",locallabel);
+            fprintf(fp, "    add byte[darraysize], 16\n");
+            fprintf(fp, "    sub byte[darraysize], ah\n");
             fprintf(fp, "    locallabel%d:\n",locallabel);
             fprintf(fp, "\n");
             locallabel++;
