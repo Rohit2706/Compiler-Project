@@ -10,6 +10,7 @@ int label = 1;
 SYMBOL_TABLE* curr_st, *save_st;
 int locallabel=1;
 int switchlabel=1;
+int whilelabel = 1;
 tree_node* child;
 FTValue* lookup;
 
@@ -116,15 +117,15 @@ void generateAssembly(tree_node* ast, FILE* fp){
       case WHILE:
         save_st = curr_st;
         curr_st = ast->stptr;
-        fprintf(fp,"loopStart%d:\n", label);
+        fprintf(fp,"whileStart%d:\n", whilelabel);
         generateAssembly(ast->child[0], fp);
         fprintf(fp,"    pop rax\n");
         fprintf(fp,"    cmp al,0\n");
-        fprintf(fp,"    je loopEnd%d\n",label);    
+        fprintf(fp,"    je whileEnd%d\n",whilelabel);    
         generateAssembly(ast->child[1], fp);
-        fprintf(fp,"    jmp loopStart%d\n",label);
-        fprintf(fp,"loopEnd%d:\n",label);
-        label++;
+        fprintf(fp,"    jmp whileStart%d\n",whilelabel);
+        fprintf(fp,"whileEnd%d:\n",whilelabel);
+        whilelabel++;
         curr_st = save_st;
         return; break;
 

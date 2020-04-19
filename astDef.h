@@ -4,9 +4,16 @@
 //ROHIT JAIN 2017A7PS0122P
 //ADITYA SAXENA 2017A7PS0166P
 
+// This file implements data structures needed for the ast(ast.c)
+
+#include "mappingTable.h"
+#include "FunctionTable.h"
+
+#define GRAMMAR_SIZE 104
 
 #define NT_SIZE 56
 #define TOKEN_SIZE 58
+#define STACK_CAPACITY 150
 
 // TOKEN is an enum variable for possible tokens in the ERPLAG language
 #ifndef tokens
@@ -39,33 +46,24 @@ typedef union{
 #endif
 
 
-typedef struct leaf_node{
+
+// Abstract Syntax Tree
+
+// Datatypes
+//typedef enum{NOT_DEFINED, INT, REAL, BOOLEAN, MODULE}TYPE;
+// A parse tree node
+typedef struct tree_node{
+
+    tagged_union val;
+    int no_child;
+    int no_leftchild;
+    struct tree_node ** child;
+    struct tree_node ** childLeft;
     char lexeme[25];
-    TYPE type;
-    TOKEN t_val;
-    VALUE value;
     unsigned int line_no;
-    STentry* stptr;
-}leaf_node;
-
-typedef struct nonleaf_node{
-
-    char label[25];
-    TYPE type;
-    NON_TERMINAL nt_val;
     VALUE value;
-    unsigned int no_child;
-    int scope[2];
-    struct ast_node ** child;
-    
-}nonleaf_node;
-
-typedef union{
-    leaf_node lnode;
-    nonleaf_node nlnode;
-}node_union;
-
-typedef struct ast_node{
-    node_union node;
     int tag;
-}ast_node;
+    TYPE_STRUCT type;
+    int scope[2];
+    SYMBOL_TABLE* stptr;
+}tree_node;

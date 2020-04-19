@@ -81,7 +81,7 @@ void insert_stentry(SYMBOL_TABLE *ht, char* key, STValue* val){
     STEntry *end=NULL;
     STEntry *next = ht->table[hashval];
     
-    while(next!=NULL && next->key!=NULL && strcmp(key,next->key) > 0){
+    while(next!=NULL && next!= (STEntry*)(0x20) && next->key!=NULL && strcmp(key,next->key) > 0){
         end = next;
         next = next->next;
     }
@@ -92,7 +92,7 @@ void insert_stentry(SYMBOL_TABLE *ht, char* key, STValue* val){
         newpair->next = next;
         ht->table[hashval] = newpair;
         }
-        else if(next == NULL){
+        else if(next == NULL || next == (STEntry*)(0x20)){
             end->next = newpair; 
         }   else{
                 newpair->next = next;
@@ -108,11 +108,11 @@ STValue* get_stvalue(SYMBOL_TABLE *ht, char* key){
     int hashvalue = st_hash_func(ht,key);
 
     pair = ht->table[hashvalue];
-    while(pair!=NULL && pair->key !=NULL && strcmp(key,pair->key) > 0){
+    while(pair!=NULL && pair!= (STEntry*)(0x20) && pair->key !=NULL && strcmp(key,pair->key) > 0){
         pair = pair->next;
     }
 
-    if( pair == NULL||pair->key == NULL||strcmp( key, pair->key ) != 0 ) {
+    if( pair == NULL|| pair == (STEntry*)(0x20) ||pair->key == NULL||strcmp( key, pair->key ) != 0 ) {
 		return NULL;
     }
     return pair->value;
